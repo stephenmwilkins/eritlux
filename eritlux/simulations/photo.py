@@ -84,10 +84,10 @@ def idealised_image(self, field, detection_filters = None, width_pixels = 51):
             source_cat = imagesim.perform_photometry(detection_cat, segm_deblended, imgs)
 
             for f in field.filters:
-                self.o[f'observed/kron_flux/{f}'][i] = source_cat[f].kron_flux[0]
-                self.o[f'observed/kron_fluxerr/{f}'][i] = source_cat[f].kron_fluxerr[0]
-                self.o[f'observed/segment_flux/{f}'][i] = source_cat[f].segment_flux[0]
-                self.o[f'observed/segment_fluxerr/{f}'][i] = source_cat[f].segment_fluxerr[0]
+                self.o[f'observed/kron_flux/{f}'][i] = source_cat[f].kron_flux[0]/imgs[f].nJy_to_es
+                self.o[f'observed/kron_fluxerr/{f}'][i] = source_cat[f].kron_fluxerr[0]/imgs[f].nJy_to_es
+                self.o[f'observed/segment_flux/{f}'][i] = source_cat[f].segment_flux[0]/imgs[f].nJy_to_es
+                self.o[f'observed/segment_fluxerr/{f}'][i] = source_cat[f].segment_fluxerr[0]/imgs[f].nJy_to_es
 
 
     # for q in quantities:

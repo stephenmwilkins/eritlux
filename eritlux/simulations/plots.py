@@ -27,10 +27,14 @@ bins = 50
 
 class analyse:
 
-    def __init__(self, output_dir, output_filename):
+    def __init__(self, output_dir, output_filename, show_plots = True, save_plots = False):
+
 
         self.output_dir = output_dir
         self.output_filename = output_filename
+        self.show_plots = show_plots
+        self.save_plots = save_plots
+
         self.hf = h5py.File(f'{output_dir}/{output_filename}.h5', 'r')
         self.detected = self.hf['observed/detected'][:].astype('bool')
 
@@ -87,8 +91,8 @@ class analyse:
         ax.set_xlabel(rf'$\rm {labels[x]}$')
         ax.set_ylabel(rf'$\rm {labels[y]}$')
 
-        fig.savefig(f'{self.output_dir}/{self.output_filename}_detection.pdf')
-        plt.show()
+        if self.save_plots: fig.savefig(f'{self.output_dir}/{self.output_filename}_detection.pdf')
+        if self.show_plots: plt.show()
 
 
     def detection_grid(self, properties, s = None, save = False):
@@ -125,29 +129,133 @@ class analyse:
                 else:
                     ax.xaxis.set_ticklabels([])
 
-
-        plt.show()
-        fig.savefig(f'{self.output_dir}/{self.output_filename}_detection_grid.pdf')
+        if self.save_plots: fig.savefig(f'{self.output_dir}/{self.output_filename}_detection_grid.pdf')
+        if self.show_plots: plt.show()
 
     # --- photometric redshift
 
-    def make_redshift_plot(self):
+    # def make_redshift_plot(self):
+    #
+    #     fig, ax = default_plot()
+    #
+    #     cmap = cm.viridis
+    #     norm = mpl.colors.Normalize(vmin=0, vmax=3)
+    #
+    #     ax.scatter(hf['intrinsic/z'][detected], hf['observed/pz/z_a'][detected], c = cmap(norm(np.log10(hf['observed/sn'][detected]))), s=5)
+    #     ax.plot([3,13],[3,13],c='k', alpha=0.1)
+    #
+    #     ax.set_xlim([3,13])
+    #     ax.set_ylim([3,13])
+    #
+    #     ax.set_xlabel(r'$\rm z$')
+    #     ax.set_ylabel(r'$\rm z_{PZ}$')
+    #
+    #     # ax.legend(loc = 'lower left', fontsize = 8)
+    #
+    #     fig.savefig(f'{self.output_dir}/{self.output_filename}_zpz.pdf')
+    #     fig.clf()
 
-        fig, ax = default_plot()
+
+    def make_photometry_plot(self, cmap = 'viridis'):
+
+        fluxes_input = self.hf['intrinsic/flux/']
+        fluxes_observed = self.hf['observed/flux/']
+
+        filters = list(fluxes_input.keys())
+
+
+        fig, axes = fig, axes = plt.subplots(1, len(filters), figsize = (3*len(filters),3))
+        plt.subplots_adjust(left=0.1, top=0.9, bottom=0.1, right=0.9, wspace=0.02, hspace=0.02)
+
+
+        f_range = [-1.0, 3.0] # log10(nJy)
+        R_range = [-0.5, 0.5]
+
+        for f, ax in zip(filters, axes):
+
+            f_input = np.log10(fluxes_input[f][self.detected])
+            f_obseved = np.log10(fluxes_observed[f][self.detected])
+
+            R = f_obseved - f_input
+
+            print(np.min(f_input), np.max(f_input))
+            print(np.min(R), np.max(R))
+
+            H, bin_edges_x, bin_edges_y = np.histogram2d(f_input, R,bins=(bins*2,bins*2), range = [f_range,R_range])
+
+            ax.imshow(H.T, origin='lower', extent = [*f_range, *R_range], aspect = 'auto', cmap = cmap)
+
+            ax.set_xlim(f_range)
+            ax.set_ylim(R_range)
+
+
+        # ax.set_xlabel(r'$\rm z$')
+        # ax.set_ylabel(r'$\rm z_{PZ}$')
+
+        # ax.legend(loc = 'lower left', fontsize = 8)
+
+        if self.show_plots: plt.show()
+        if self.save_plots: fig.savefig(f'{self.output_dir}/{self.output_filename}_photometry.pdf')
+
+
+
+
+
+
+
+    def make_size_scatter_plot(self):
+
+        fig, ax = self.default_plot()
 
         cmap = cm.viridis
         norm = mpl.colors.Normalize(vmin=0, vmax=3)
 
-        ax.scatter(hf['intrinsic/z'][detected], hf['observed/pz/z_a'][detected], c = cmap(norm(np.log10(hf['observed/sn'][detected]))), s=5)
-        ax.plot([3,13],[3,13],c='k', alpha=0.1)
+        r_input = self.hf['intrinsic/r_eff_arcsec'][self.detected]
+        r_obs = self.hf['observed/r_eff_kron_arcsec'][self.detected]
+        log10sn = np.log10(self.hf['observed/sn'][self.detected])
 
-        ax.set_xlim([3,13])
-        ax.set_ylim([3,13])
+        ax.scatter(r_input, r_obs, s, c = cmap(norm(log10sn)), s=5)
 
-        ax.set_xlabel(r'$\rm z$')
-        ax.set_ylabel(r'$\rm z_{PZ}$')
+        r = range['intrinsic/log10r_eff_kpc']
+
+        # ax.plot(r,r,c='k', alpha=0.1)
+        #
+        # ax.set_xlim(r)
+        # ax.set_ylim(r)
+
+        # ax.set_xlabel(r'$\rm z$')
+        # ax.set_ylabel(r'$\rm z_{PZ}$')
 
         # ax.legend(loc = 'lower left', fontsize = 8)
 
-        fig.savefig(f'{self.output_dir}/{self.output_filename}_zpz.pdf')
-        fig.clf()
+        if self.show_plots: plt.show()
+        if self.save_plots: fig.savefig(f'{self.output_dir}/{self.output_filename}_size.pdf')
+
+
+    def make_size_plot(self):
+
+        fig, ax = self.default_plot()
+
+        cmap = cm.inferno
+
+        r_input = np.log10(self.hf['intrinsic/r_eff_arcsec'][self.detected])
+        r_obs = np.log10(self.hf['observed/r_eff_kron_arcsec'][self.detected])
+        log10sn = np.log10(self.hf['observed/sn'][self.detected])
+
+        r_range = [np.min(r_input), np.max(r_input)]
+
+
+
+        H, bin_edges_x, bin_edges_y = np.histogram2d(r_input,r_obs,bins=(bins,bins), range = [r_range,r_range])
+
+        ax.imshow(H.T, origin='lower', extent = [*r_range, *r_range], aspect = 'auto', cmap = cmap)
+
+        ax.plot(r_range,r_range,c='w', alpha=0.5)
+
+        ax.set_xlabel(r'$\rm log_{10}(r_{e}^{input}/arcsec)$')
+        ax.set_ylabel(r'$\rm log_{10}(r_{e}^{obs}/arcsec)$')
+
+        # ax.legend(loc = 'lower left', fontsize = 8)
+
+        if show_plots: plt.show()
+        if self.save_plots: fig.savefig(f'{self.output_dir}/{self.output_filename}_size.pdf')
