@@ -32,7 +32,7 @@ def default_prange(sed_model, profile_model):
     if profile_model == 'simple':
         pass
     elif profile_model == 'cSersic':
-        prange['log10r_eff_kpc'] = uniform(*[-0.3, 0.3])
+        prange['log10r_eff_kpc'] = uniform(*[-0.5, 1.0])
         prange['n'] = delta(1.0)
         prange['ellip'] = delta(0.0)
         prange['theta'] = delta(0.0)
@@ -40,8 +40,8 @@ def default_prange(sed_model, profile_model):
         print('WARNING: model not yet implemented')
 
     if sed_model == 'beta':
-        prange['beta'] = uniform(*[-3., 3]) # uniform from \beta = -3 to 1
-        prange['log10L'] = uniform(*[28, 2])
+        prange['beta'] = uniform(*[-3., 4]) # uniform from \beta = -3 to 1
+        prange['log10L'] = uniform(*[27, 3])
     else:
         print('WARNING: model not yet implemented')
 

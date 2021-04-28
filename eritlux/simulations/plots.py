@@ -10,15 +10,18 @@ import FLARE.plt as fplt
 
 labels = {}
 labels['intrinsic/z'] = 'z'
-labels['intrinsic/log10L'] = r'log_{10}(L/erg s^{-1} Hz^{-1})'
+labels['intrinsic/log10L'] = r'log_{10}(L/erg\ s^{-1}\ Hz^{-1})'
 labels['intrinsic/beta'] = r'\beta'
+labels['intrinsic/log10r_eff_kpc'] = r'log_{10}(r_{eff}/kpc)'
+
 
 range = {}
 range['intrinsic/z'] = [6,10]
 range['intrinsic/log10L'] = [28,30]
-range['intrinsic/beta'] = [-3,1]
+range['intrinsic/beta'] = [-3,0]
+range['intrinsic/log10r_eff_kpc'] = [-0.3,0.0]
 
-bins = 20
+bins = 50
 
 
 
@@ -29,12 +32,22 @@ class analyse:
         self.output_dir = output_dir
         self.output_filename = output_filename
         self.hf = h5py.File(f'{output_dir}/{output_filename}.h5', 'r')
-        self.detected = self.hf['observed/detected'][:]
+        self.detected = self.hf['observed/detected'][:].astype('bool')
 
-    def visit(self):
+    # def explore_hdf5(self):
+    #
+    #     # --- show everything in the hdf5 file
+    #     self.hf.visit(lambda x: print(x))
 
-        # --- show everything in the hdf5 file
-        hf.visit(lambda x: print(x))
+    def explore_hdf5(self):
+
+        def get_name_shape(name, item):
+            shape = ''
+            if hasattr(item, 'value'):
+                shape = item.shape
+            print(name, shape)
+
+        self.hf.visititems(get_name_shape)
 
 
     def default_plot(self):
@@ -83,7 +96,7 @@ class analyse:
         N = len(properties) - 1
 
         fig, axes = plt.subplots(N, N, figsize = (6,6))
-        plt.subplots_adjust(left=0.1, top=0.9, bottom=0.1, right=0.9, wspace=0.0, hspace=0.0)
+        plt.subplots_adjust(left=0.1, top=0.9, bottom=0.1, right=0.9, wspace=0.02, hspace=0.02)
 
         # axes = axes.T
 
@@ -95,7 +108,7 @@ class analyse:
 
                 ax = axes[jj, ii]
 
-                if j+i<2*(N-1):
+                if j+i<N:
                     ax = self.detection_panel(ax, x, y, s = s)
                     # ax.text(0.5, 0.5, f'x{i}-y{j}', transform = ax.transAxes)
                 else:

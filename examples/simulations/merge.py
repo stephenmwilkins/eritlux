@@ -3,4 +3,10 @@
 import FLARE.io.hdf5 as flare_hdf5
 
 
-flare_hdf5.merge([f'output/beta_idealisedimage_EAZY_100_{i+1}.h5' for i in range(2)], f'output/beta_idealisedimage_EAZY_merged.h5')
+
+output_dir = '/Users/stephenwilkins/Dropbox/Research/data/eritlux'
+output_filename_pattern = 'beta_idealisedimage_EAZY'
+N_sim = 1000
+N = 100
+
+flare_hdf5.merge([f'{output_dir}/{output_filename_pattern}_{N_sim}_{i+1}' for i in range(N)], f'{output_dir}/{output_filename_pattern}')
