@@ -14,7 +14,7 @@ import eritlux.simulations.simulations
 
 
 
-np.random.seed(42)
+
 
 args = sys.argv
 print(args)
@@ -23,23 +23,27 @@ model = 'beta_idealisedimage_EAZY'
 
 if len(args) == 1:
     N = 10
+    np.random.seed(42)
     output_dir = 'output'
     output_filename = f'{model}_{N}'
 
 elif len(args) == 2:
     N = int(args[1])
+    np.random.seed(42)
     output_dir = 'output'
     output_filename = f'{model}_{N}'
 
 elif len(args) == 3:
     N = int(args[1])
     i = int(args[2])
+    np.random.seed(i)
     output_dir = 'output'
     output_filename = f'{model}_{N}_{i}'
 
 elif len(args) == 4:
     N = int(args[1])
     i = int(args[2])
+    np.random.seed(i)
     output_dir = args[3]
     output_filename = f'{model}_{N}_{i}'
 
