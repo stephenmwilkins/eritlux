@@ -24,7 +24,7 @@ def idealised(sim, pz_error = lambda x: 0.1):
 
 def eazy(self, eazy_working_dir = '.', path_to_EAZY = f'{FLARE.FLARE_dir}/software/eazy-photoz'):
 
-    id = 'test'
+    id = self.output_filename
 
     # return idealised photometry based simply on the depth
 

@@ -60,8 +60,9 @@ class Simulation():
     pz_eazy = pz.eazy
 
 
-    def __init__(self, profile_model = 'simple', sed_model = 'beta', prange = False, cosmo = FLARE.default_cosmo()):
+    def __init__(self, profile_model = 'simple', sed_model = 'beta', output_filename = 'test', prange = False, cosmo = FLARE.default_cosmo()):
 
+        self.output_filename = output_filename # needed here to label the EAZY run
         self.profile_model = profile_model
         self.sed_model = sed_model
         self.cosmo = cosmo
