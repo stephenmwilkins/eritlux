@@ -125,7 +125,7 @@ class analyse:
         cmap = cm.viridis
         norm = mpl.colors.Normalize(vmin=0, vmax=3)
 
-        ax.scatter(hf['intrinsic/z'][detected], hf['observed/pz/z_a'], c = cmap(norm(np.log10(hf['observed/sn'][detected]))), s=5)
+        ax.scatter(hf['intrinsic/z'][detected], hf['observed/pz/z_a'][detected], c = cmap(norm(np.log10(hf['observed/sn'][detected]))), s=5)
         ax.plot([3,13],[3,13],c='k', alpha=0.1)
 
         ax.set_xlim([3,13])

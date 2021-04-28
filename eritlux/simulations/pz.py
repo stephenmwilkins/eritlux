@@ -37,5 +37,9 @@ def eazy(self, eazy_working_dir = '.', path_to_EAZY = f'{FLARE.FLARE_dir}/softwa
 
     zout, POFZ = flareazy.read_EAZY_output(f'{eazy_working_dir}/EAZY/outputs/{id}')
 
+
+
+
     for k in ['z_a','z_m1']:
-        self.o[f'observed/pz/{k}'] = zout[k]
+        self.o[f'observed/pz/{k}'] = np.zeros(self.N)
+        self.o[f'observed/pz/{k}'][self.o['observed/detected']] = zout[k]

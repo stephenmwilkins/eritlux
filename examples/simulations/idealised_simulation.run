@@ -27,4 +27,7 @@
 # needs to be copied, and then execute the program
 ######################################################################
 
+# qsub -t 1:100 -q smp.q idealised_simulation.run
+
+
 python ./idealised_simulation.py 10000 $SGE_TASK_ID /research/astro/flare/data/eritlux

@@ -63,3 +63,10 @@ sim.intrinsic_beta(field.filters) # produce intrinsic photometry
 sim.photo_idealised_image(field, detection_filters = detection_filters) # produce observed photometry
 sim.pz_eazy() # measure photometric redshifts
 sim.export_to_HDF5(output_dir, output_filename)
+
+
+for k,v in sim.o.items():
+    print(k, v.shape)
+
+print(sim.o['observed/flux/Hubble.WFC3.f160w'][:])
+print(sim.o['observed/pz/z_a'][:])

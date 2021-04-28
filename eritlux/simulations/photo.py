@@ -14,7 +14,7 @@ def idealised(self, field, detection_filter = None, detection_threshold = 10, si
     flux_err = {f: np.ones(self.N)*(field.depths[f]) for f in field.filters}
 
     # --- define the "observed" flux in each band. In this case it is simply the intrinsic flux + gaussian noise.
-    flux = {f: self.o[f'intrinsic/fluxes/{f}'] + field.depths[f] * np.random.randn(self.N) for f in field.filters}
+    flux = {f: self.o[f'intrinsic/flux/{f}'] + field.depths[f] * np.random.randn(self.N) for f in field.filters}
 
     # ---
     if not detection_filter:
@@ -27,20 +27,12 @@ def idealised(self, field, detection_filter = None, detection_threshold = 10, si
     self.o['observed/detected'] = detected
 
     for k, v in flux.items():
-        self.o[f'observed/fluxes/{k}/flux'] = v[detected]
+        self.o[f'observed/flux/{k}'] = v
 
     for k, v in flux_err.items():
-        self.o[f'observed/fluxes/{k}/err'] = v[detected]
+        self.o[f'observed/flux_err/{k}'] = v
 
-    #
-    # # --- add observed sizes?
-    #
-    # if not size_error:
-    #     size = hf['intrinsic/input/log10r_e'][detected]
-    #
-    # # --- could add some scatter on the size as a f(S/N)
-    #
-    # hf.create_dataset(f'observed/log10r_e/', data = size)
+
 
 
 
@@ -58,7 +50,6 @@ def idealised_image(self, field, detection_filters = None, width_pixels = 51):
 
     for q in ['sn'] + quantities:
         self.o[f'observed/{q}'] = np.zeros(self.N)
-
 
     for f in field.filters:
         for q in ['kron_flux','kron_fluxerr','segment_flux','segment_fluxerr']:
@@ -99,15 +90,15 @@ def idealised_image(self, field, detection_filters = None, width_pixels = 51):
                 self.o[f'observed/segment_fluxerr/{f}'][i] = source_cat[f].segment_fluxerr[0]
 
 
-    for q in quantities:
-        self.o[f'observed/{q}'] = self.o[f'observed/{q}'][self.o[f'observed/detected']]
+    # for q in quantities:
+    #     self.o[f'observed/{q}'] = self.o[f'observed/{q}'][self.o[f'observed/detected']]
 
     for f in field.filters:
-        for q in ['kron_flux','kron_fluxerr','segment_flux','segment_fluxerr']:
-            self.o[f'observed/{q}/{f}'] =  self.o[f'observed/{q}/{f}'][self.o[f'observed/detected']]
+        # for q in ['kron_flux','kron_fluxerr','segment_flux','segment_fluxerr']:
+        #     self.o[f'observed/{q}/{f}'] =  self.o[f'observed/{q}/{f}'][self.o[f'observed/detected']]
 
-        self.o[f'observed/fluxes/{f}/flux'] = self.o[f'observed/kron_flux/{f}']
-        self.o[f'observed/fluxes/{f}/err'] = self.o[f'observed/kron_fluxerr/{f}']
+        self.o[f'observed/flux/{f}'] = self.o[f'observed/kron_flux/{f}']
+        self.o[f'observed/flux_err/{f}'] = self.o[f'observed/kron_fluxerr/{f}']
 
 
 

@@ -121,7 +121,7 @@ def create_image(BackgroundCreator, field, p, width_pixels = 51, verbose = False
     mod = sersic(width_arcsec, width_pixels, p['intrinsic/r_eff_arcsec'], p['intrinsic/n'], p['intrinsic/ellip'], p['intrinsic/theta'])
 
     for f in field.filters:
-        flux_nJy = p[f'intrinsic/fluxes/{f}']
+        flux_nJy = p[f'intrinsic/flux/{f}']
         if verbose:
             print(flux_nJy, BackgroundCreator[f].aperture.depth)
         img[f].mod = mod * flux_nJy * img[f].nJy_to_es

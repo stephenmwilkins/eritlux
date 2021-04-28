@@ -17,7 +17,7 @@ def beta(self, filters):
     self.filters = filters
 
     for f in filters:
-        self.o[f'intrinsic/fluxes/{f}'] = np.zeros(self.N)
+        self.o[f'intrinsic/flux/{f}'] = np.zeros(self.N)
 
     for i, (z, beta, log10L) in enumerate(zip(self.o['intrinsic/z'], self.o['intrinsic/beta'], self.o['intrinsic/log10L'])):
 
@@ -28,4 +28,4 @@ def beta(self, filters):
         sed.get_Fnu(F) # --- generate broadband photometry
 
         for f in filters:
-            self.o[f'intrinsic/fluxes/{f}'][i] = sed.Fnu[f]
+            self.o[f'intrinsic/flux/{f}'][i] = sed.Fnu[f]
