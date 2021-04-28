@@ -27,4 +27,4 @@
 # needs to be copied, and then execute the program
 ######################################################################
 
-./idealised_simulation.py 100 $SGE_TASK_ID /research/astro/flare/data/eritlux
+python ./idealised_simulation.py 100 $SGE_TASK_ID /research/astro/flare/data/eritlux
