@@ -1,0 +1,8 @@
+# **************************
+# Here we have a new environment variable that is only set for array jobs - $SGE_TASK_ID
+# This is the value of the task ID for each array job, so if we asked for an
+# array job with 10 tasks, then SGE_TASK_ID will range from 1 to 10.
+# We are using this here to compute the fibonacci sequence of length == the task ID
+# **************************
+
+./idealised_simulation.py 100 $SGE_TASK_ID /research/astro/flare/data/eritlux
