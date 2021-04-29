@@ -60,10 +60,11 @@ class Simulation():
     pz_eazy = pz.eazy
 
 
-    def __init__(self, profile_model = 'simple', sed_model = 'beta', output_filename = 'test', prange = False, cosmo = FLARE.default_cosmo()):
+    def __init__(self, morph_model = 'simple', sed_model = 'beta', run_id = 0, prange = False, cosmo = FLARE.default_cosmo()):
 
-        self.output_filename = output_filename # needed here to label the EAZY run
-        self.profile_model = profile_model
+        self.run_id = str(run_id) # needed here to label the EAZY run, could do something else? e.g. random
+        self.morph_model = morph_model
+        self.profile_model = morph_model
         self.sed_model = sed_model
         self.cosmo = cosmo
 
@@ -105,6 +106,7 @@ class Simulation():
 
         hf.attrs['N'] = self.N
         hf.attrs['profile_model'] = self.profile_model
+        hf.attrs['morph_model'] = self.morph_model
         hf.attrs['sed_model'] = self.sed_model
 
         for k, v in self.o.items():

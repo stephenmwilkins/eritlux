@@ -6,7 +6,7 @@ import FLARE.io.hdf5 as flare_hdf5
 
 output_dir = '/Users/stephenwilkins/Dropbox/Research/data/eritlux'
 
-output_filename_pattern = 'beta_idealised_EAZY'
+output_filename_pattern = '10nJy_beta_cSersic_idealisedimagePSF_eazy'
 N_sim = 10000
 N = 100
 

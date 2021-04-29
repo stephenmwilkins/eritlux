@@ -11,11 +11,11 @@ import eritlux.simulations.plots as plots
 
 output_dir = '/Users/stephenwilkins/Dropbox/Research/data/eritlux'
 
-output_filename = '10nJy_beta_idealised_EAZY'
-output_filename = '10nJy_beta_idealisedimage_EAZY'
+output_filename = 'SimpleHubble_10nJy_beta_simple_idealised_eazy'
+output_filename = 'SimpleHubble_10nJy_beta_cSersic_idealisedimage_eazy'
 
-scenario, sed_model, phot_model, pz_model, = output_filename.split('_')
 
+survey_id, field_id, sed_model, morph_model, phot_model, pz_model, = output_filename.split('_')
 
 
 analyser = plots.analyse(output_dir, output_filename, save_plots = True)

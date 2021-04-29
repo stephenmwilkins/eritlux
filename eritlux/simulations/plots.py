@@ -37,13 +37,21 @@ class analyse:
         self.show_plots = show_plots
         self.save_plots = save_plots
 
+        survey_id, field_id, sed_model, morph_model, phot_model, pz_model, = output_filename.split('_')
+
+        self.survey_id = survey_id
+        self.field_id = field_id
+        self.sed_model = sed_model
+        self.morph_model = morph_model
+        self.phot_model = phot_model
+        self.pz_model = pz_model
+
         self.hf = h5py.File(f'{output_dir}/{output_filename}.h5', 'r')
         self.detected = self.hf['observed/detected'][:].astype('bool')
 
         # print(self.hf.attrs.keys())
 
-        self.sed_model = self.hf.attrs['sed_model']
-        self.profile_model = self.hf.attrs['profile_model']
+
 
         self.plot_dir = f'{output_dir}/{output_filename}'
 
