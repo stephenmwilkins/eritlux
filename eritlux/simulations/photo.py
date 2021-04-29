@@ -37,7 +37,7 @@ def idealised(self, field, detection_filter = None, detection_threshold = 10, si
 
 
 
-def idealised_image(self, field, detection_filters = None, width_pixels = 51):
+def idealised_image(self, field, detection_filters = None, width_pixels = 51, include_psf = False):
 
     # --- initialise background maker
     BackgroundCreator = {f:imagesim.CreateBackground(f, field) for f in field.filters}
@@ -56,14 +56,20 @@ def idealised_image(self, field, detection_filters = None, width_pixels = 51):
             self.o[f'observed/{q}/{f}'] = np.zeros(self.N)
 
 
-    for i in range(self.N):
+    # --- create PSF
 
-        print(i)
+    if include_psf:
+        PSFs = imagesim.create_PSFs(field, width_pixels)
+    else:
+        PSFs = None
+
+
+    for i in range(self.N):
 
         ob = self.i(i=i)
 
         # --- create image object
-        imgs = imagesim.create_image(BackgroundCreator, field, ob, width_pixels = 51)
+        imgs = imagesim.create_image(BackgroundCreator, field, ob, width_pixels = 51, PSFs = PSFs)
 
         # --- create detection image
 

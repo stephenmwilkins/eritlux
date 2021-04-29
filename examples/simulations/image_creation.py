@@ -9,12 +9,19 @@ import matplotlib.pyplot as plt
 import FLARE.surveys
 import FLARE.observatories
 
+
+
 import pysep.plots.image
+
+
+
+
 
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 import eritlux.simulations.simulations
+import eritlux.simulations.psf
 import eritlux.simulations.imagesim as imagesim
 
 # np.random.seed(38)
@@ -41,21 +48,51 @@ sim.intrinsic_beta(field.filters) # produce intrinsic photometry
 
 BackgroundCreator = {f: imagesim.CreateBackground(f, field) for f in field.filters}
 
-imgs = imagesim.create_image(BackgroundCreator, field, p, width_pixels = 51, verbose = True)
 
-# pysep.plots.image.make_flux_plots(imgs)
-# pysep.plots.image.make_significance_plots(imgs)
+width_pixels = 51
 
-detection_image = imagesim.create_detection_image(imgs, detection_filters)
+PSFs = eritlux.simulations.imagesim.create_PSFs(field, width_pixels)
 
-pysep.plots.image.make_significance_plot(detection_image)
 
-detected, detection_cat, segm_deblended = imagesim.detect_sources(detection_image)
 
-# pysep.plots.image.make_segm_plot(segm_deblended)
+imgs = imagesim.create_image(BackgroundCreator, field, sim.i(), width_pixels = width_pixels, verbose = True, PSFs = PSFs)
 
-source_cats = imagesim.perform_photometry(detection_cat, segm_deblended, imgs)
+img = imgs[field.filters[-1]]
 
-for f in field.filters:
+plt.imshow(img.mod_nopsf)
+plt.show()
 
-    print(f, p[f'intrinsic/fluxes/{f}'], source_cats[f].kron_flux[0]/imgs[f].nJy_to_es, source_cats[f].segment_flux[0]/imgs[f].nJy_to_es, source_cats[f].kron_flux[0]/source_cats[f].kron_fluxerr[0])
+
+plt.imshow(img.mod)
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+#
+#
+# imgs = imagesim.create_image(BackgroundCreator, field, p, width_pixels = width_pixels, verbose = True)
+#
+# # pysep.plots.image.make_flux_plots(imgs)
+# # pysep.plots.image.make_significance_plots(imgs)
+#
+# detection_image = imagesim.create_detection_image(imgs, detection_filters)
+#
+# pysep.plots.image.make_significance_plot(detection_image)
+#
+# detected, detection_cat, segm_deblended = imagesim.detect_sources(detection_image)
+#
+# # pysep.plots.image.make_segm_plot(segm_deblended)
+#
+# source_cats = imagesim.perform_photometry(detection_cat, segm_deblended, imgs)
+#
+# for f in field.filters:
+#
+#     print(f, p[f'intrinsic/fluxes/{f}'], source_cats[f].kron_flux[0]/imgs[f].nJy_to_es, source_cats[f].segment_flux[0]/imgs[f].nJy_to_es, source_cats[f].kron_flux[0]/source_cats[f].kron_fluxerr[0])

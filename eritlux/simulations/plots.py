@@ -1,5 +1,7 @@
 
+import os
 import numpy as np
+import scipy.stats
 import h5py
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -17,9 +19,9 @@ labels['intrinsic/log10r_eff_kpc'] = r'log_{10}(r_{eff}/kpc)'
 
 range = {}
 range['intrinsic/z'] = [6,10]
-range['intrinsic/log10L'] = [28,30]
-range['intrinsic/beta'] = [-3,0]
-range['intrinsic/log10r_eff_kpc'] = [-0.3,0.0]
+range['intrinsic/log10L'] = [27,30]
+range['intrinsic/beta'] = [-3,1]
+range['intrinsic/log10r_eff_kpc'] = [-0.5,0.5]
 
 bins = 50
 
@@ -38,10 +40,17 @@ class analyse:
         self.hf = h5py.File(f'{output_dir}/{output_filename}.h5', 'r')
         self.detected = self.hf['observed/detected'][:].astype('bool')
 
-    # def explore_hdf5(self):
-    #
-    #     # --- show everything in the hdf5 file
-    #     self.hf.visit(lambda x: print(x))
+        # print(self.hf.attrs.keys())
+
+        self.sed_model = self.hf.attrs['sed_model']
+        self.profile_model = self.hf.attrs['profile_model']
+
+        self.plot_dir = f'{output_dir}/{output_filename}'
+
+        if not os.path.exists(self.plot_dir):
+            os.makedirs(self.plot_dir)
+
+
 
     def explore_hdf5(self):
 
@@ -91,11 +100,11 @@ class analyse:
         ax.set_xlabel(rf'$\rm {labels[x]}$')
         ax.set_ylabel(rf'$\rm {labels[y]}$')
 
-        if self.save_plots: fig.savefig(f'{self.output_dir}/{self.output_filename}_detection.pdf')
+        if self.save_plots: fig.savefig(f'{self.plot_dir}/detection.pdf')
         if self.show_plots: plt.show()
 
 
-    def detection_grid(self, properties, s = None, save = False):
+    def detection_grid(self, properties, s = None, save = False, cmap = 'inferno'):
 
         N = len(properties) - 1
 
@@ -113,7 +122,7 @@ class analyse:
                 ax = axes[jj, ii]
 
                 if j+i<N:
-                    ax = self.detection_panel(ax, x, y, s = s)
+                    ax = self.detection_panel(ax, x, y, s = s, cmap = cmap)
                     # ax.text(0.5, 0.5, f'x{i}-y{j}', transform = ax.transAxes)
                 else:
                     ax.set_axis_off()
@@ -129,133 +138,227 @@ class analyse:
                 else:
                     ax.xaxis.set_ticklabels([])
 
-        if self.save_plots: fig.savefig(f'{self.output_dir}/{self.output_filename}_detection_grid.pdf')
+
+        # --- add colourbar
+        cax = fig.add_axes([0.4, 0.87, 0.5, 0.03])
+        norm = mpl.colors.Normalize(0,1)
+        fig.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), cax=cax, orientation='horizontal')
+        cax.set_xlabel(rf'$\rm detected\ fraction$')
+
+        if self.save_plots: fig.savefig(f'{self.plot_dir}/detection_grid.pdf')
         if self.show_plots: plt.show()
+
+
+    def pz_panel(self, ax, x, y, s = None, statistic = 'median', cmap = 'coolwarm', vmnmx = [-0.1, 0.1]):
+
+        X = self.hf[x][self.detected]
+        Y = self.hf[y][self.detected]
+        V = (self.hf['intrinsic/z'][self.detected] - self.hf['observed/pz/z_m1'][self.detected])/self.hf['intrinsic/z'][self.detected] # the data on which the statistic is calculated
+
+        stat, bin_edges_x, bin_edges_y, _ = scipy.stats.binned_statistic_2d(X, Y, V, statistic = statistic, bins = (bins,bins), range = [range[x],range[y]])
+
+        ax.imshow(stat.T, origin='lower', extent = [*range[x], *range[y]], aspect = 'auto', cmap = cmap, vmin = vmnmx[0], vmax = vmnmx[1])
+
+        return ax
+
+
+    def pz_grid(self, properties, s = None, save = False):
+
+        N = len(properties) - 1
+
+
+        for statistic, vmnmx, cmap in zip(['median','std'], [[-0.1, 0.1],[0.0, 0.2]], ['coolwarm', 'viridis']):
+
+            fig, axes = plt.subplots(N, N, figsize = (6,6))
+            plt.subplots_adjust(left=0.1, top=0.9, bottom=0.1, right=0.9, wspace=0.02, hspace=0.02)
+
+            # axes = axes.T
+
+            for i,x in enumerate(properties[:-1]):
+                for j,y in enumerate(properties[1:][::-1]):
+
+                    jj = N-1-j
+                    ii = i
+
+                    ax = axes[jj, ii]
+
+                    if j+i<N:
+                        ax = self.pz_panel(ax, x, y, s = s, statistic = statistic, cmap = cmap, vmnmx = vmnmx)
+                    else:
+                        ax.set_axis_off()
+
+                    if i == 0: # first column
+                        ax.set_ylabel(rf'$\rm {labels[y]}$')
+                    else:
+                        ax.yaxis.set_ticklabels([])
+
+                    if j == 0: # first row
+                        ax.set_xlabel(rf'$\rm {labels[x]}$')
+                    else:
+                        ax.xaxis.set_ticklabels([])
+
+
+            # --- add colourbar
+            cax = fig.add_axes([0.4, 0.87, 0.5, 0.03])
+            norm = mpl.colors.Normalize(*vmnmx)
+            fig.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), cax=cax, orientation='horizontal')
+            cax.set_xlabel(rf'$\rm {statistic}([z-z_{{PZ}}]/z)$')
+
+
+            if self.save_plots: fig.savefig(f'{self.plot_dir}/pz_grid_{statistic}.pdf')
+            if self.show_plots: plt.show()
+
 
     # --- photometric redshift
 
-    # def make_redshift_plot(self):
-    #
-    #     fig, ax = default_plot()
-    #
-    #     cmap = cm.viridis
-    #     norm = mpl.colors.Normalize(vmin=0, vmax=3)
-    #
-    #     ax.scatter(hf['intrinsic/z'][detected], hf['observed/pz/z_a'][detected], c = cmap(norm(np.log10(hf['observed/sn'][detected]))), s=5)
-    #     ax.plot([3,13],[3,13],c='k', alpha=0.1)
-    #
-    #     ax.set_xlim([3,13])
-    #     ax.set_ylim([3,13])
-    #
-    #     ax.set_xlabel(r'$\rm z$')
-    #     ax.set_ylabel(r'$\rm z_{PZ}$')
-    #
-    #     # ax.legend(loc = 'lower left', fontsize = 8)
-    #
-    #     fig.savefig(f'{self.output_dir}/{self.output_filename}_zpz.pdf')
-    #     fig.clf()
+    def make_redshift_plot(self, s=None, cmap = 'inferno'):
+
+        fig, ax = self.default_plot()
+
+        X = self.hf['intrinsic/z'][self.detected]
+        Y = (self.hf['intrinsic/z'][self.detected] - self.hf[f'observed/pz/z_m1'][self.detected])/self.hf['intrinsic/z'][self.detected]
+
+        x_range = range['intrinsic/z']
+        y_range = [-0.3, 0.3]
+
+        H, bin_edges_x, bin_edges_y = np.histogram2d(X, Y, bins=(bins*2,bins*2), range = [x_range, y_range])
+
+        ax.imshow(H.T, origin='lower', extent = [*x_range, *y_range], aspect = 'auto', cmap = cmap)
+
+        ax.axhline(0.0, c='w', alpha=0.2, lw=1)
+
+
+        median, bin_edges, _ = scipy.stats.binned_statistic(X, Y, statistic='median', bins=100)
+        P16, bin_edges, _ = scipy.stats.binned_statistic(X, Y, statistic = lambda x: np.percentile(x, 16.), bins=100)
+        P84, bin_edges, _ = scipy.stats.binned_statistic(X, Y, statistic = lambda x: np.percentile(x, 84.), bins=100)
+
+        bin_centres = bin_edges[:-1] + (bin_edges[1:] - bin_edges[:-1])/2
+
+        ax.fill_between(bin_centres, P16, P84, color='w', alpha = 0.2, label = r'$\rm P_{84}-P_{16}$')
+        ax.plot(bin_centres, median, c='w', label = r'$\rm median $')
+
+        ax.set_xlim(x_range)
+        ax.set_ylim(y_range)
+
+        ax.set_xlabel(r'$\rm z$')
+        ax.set_ylabel(r'$\rm (z-z_{PZ})/z$')
+
+        l = ax.legend(fontsize = 10)
+        for text in l.get_texts():
+            text.set_color('w')
+
+        if self.save_plots: fig.savefig(f'{self.plot_dir}/zpz.pdf')
+        if self.show_plots: plt.show()
 
 
     def make_photometry_plot(self, cmap = 'viridis'):
 
-        fluxes_input = self.hf['intrinsic/flux/']
-        fluxes_observed = self.hf['observed/flux/']
+        phot_types = ['kron_flux', 'segment_flux']
 
-        filters = list(fluxes_input.keys())
+        for phot_type in phot_types:
 
+            fluxes_input = self.hf['intrinsic/flux/']
+            fluxes_observed = self.hf[f'observed/{phot_type}/']
 
-        fig, axes = fig, axes = plt.subplots(1, len(filters), figsize = (3*len(filters),3))
-        plt.subplots_adjust(left=0.1, top=0.9, bottom=0.1, right=0.9, wspace=0.02, hspace=0.02)
+            filters = list(fluxes_input.keys())
 
+            fig, axes = fig, axes = plt.subplots(1, len(filters), figsize = (3*len(filters),3), sharey = True)
+            plt.subplots_adjust(left=0.05, top=0.9, bottom=0.15, right=0.95, wspace=0.0, hspace=0.0)
 
-        f_range = [-1.0, 3.0] # log10(nJy)
-        R_range = [-0.5, 0.5]
+            f_range = [0.01, 2.99] # log10(nJy)
+            R_range = [-0.25, 0.25]
 
-        for f, ax in zip(filters, axes):
+            for f, ax in zip(filters, axes):
 
-            f_input = np.log10(fluxes_input[f][self.detected])
-            f_obseved = np.log10(fluxes_observed[f][self.detected])
+                f_input = np.log10(fluxes_input[f][self.detected])
+                f_obseved = np.log10(fluxes_observed[f][self.detected])
 
-            R = f_obseved - f_input
+                R = f_obseved - f_input
 
-            print(np.min(f_input), np.max(f_input))
-            print(np.min(R), np.max(R))
+                H, bin_edges_x, bin_edges_y = np.histogram2d(f_input, R,bins=(bins*2,bins*2), range = [f_range,R_range])
 
-            H, bin_edges_x, bin_edges_y = np.histogram2d(f_input, R,bins=(bins*2,bins*2), range = [f_range,R_range])
+                ax.imshow(H.T, origin='lower', extent = [*f_range, *R_range], aspect = 'auto', cmap = cmap)
 
-            ax.imshow(H.T, origin='lower', extent = [*f_range, *R_range], aspect = 'auto', cmap = cmap)
+                ax.axhline(0.0, c='w', alpha=0.2, lw=1)
 
-            ax.set_xlim(f_range)
-            ax.set_ylim(R_range)
+                ax.set_xlim(f_range)
+                ax.set_ylim(R_range)
 
+                ax.set_xlabel(rf'$\rm \log_{{10}}(f_{{ {f.split(".")[-1]} }}/nJy)$')
 
-        # ax.set_xlabel(r'$\rm z$')
-        # ax.set_ylabel(r'$\rm z_{PZ}$')
+            axes[0].set_ylabel(r'$\rm  \log_{10}(f^{\ observed}/f^{\ input})$')
 
-        # ax.legend(loc = 'lower left', fontsize = 8)
-
-        if self.show_plots: plt.show()
-        if self.save_plots: fig.savefig(f'{self.output_dir}/{self.output_filename}_photometry.pdf')
-
+            if self.show_plots: plt.show()
+            if self.save_plots: fig.savefig(f'{self.plot_dir}/photometry_{phot_type}.pdf')
 
 
+    def make_colour_plot(self, cmap = 'viridis', s = None):
+
+        phot_types = ['kron_flux', 'segment_flux']
+
+        for phot_type in phot_types:
+
+            fluxes_input = self.hf['intrinsic/flux/']
+            fluxes_observed = self.hf[f'observed/{phot_type}/']
+
+            filters = list(fluxes_input.keys())
+
+            fig, axes = fig, axes = plt.subplots(1, len(filters)-1, figsize = (3*(len(filters)-1),3), sharey = True)
+            plt.subplots_adjust(left=0.05, top=0.9, bottom=0.15, right=0.95, wspace=0.0, hspace=0.0)
+
+            x_range = [-2, 2] # log10(nJy)
+            y_range = [-0.25, 0.25]
+
+            for f1, f2, ax in zip(filters[:-1],filters[1:], axes):
+
+                input = -2.5*np.log10(fluxes_input[f2][self.detected]/fluxes_input[f1][self.detected])
+                observed = -2.5*np.log10(fluxes_observed[f2][self.detected]/fluxes_observed[f1][self.detected])
+
+
+                X = input
+                Y = observed - input
+
+                H, bin_edges_x, bin_edges_y = np.histogram2d(X, Y,bins=(bins*2,bins*2), range = [x_range, y_range])
+
+                ax.imshow(H.T, origin='lower', extent = [*x_range, *y_range], aspect = 'auto', cmap = cmap)
+
+                ax.axhline(0.0, c='w', alpha=0.2, lw=1)
+
+                ax.set_xlim(x_range)
+                ax.set_ylim(y_range)
+
+                ax.set_xlabel(rf"$\rm {f2.split('.')[-1]}-{f1.split('.')[-1]}$")
+
+            axes[0].set_ylabel(r'$\rm (A-B)^{\ observed} - A-B)^{\ input})$')
+
+            if self.show_plots: plt.show()
+            if self.save_plots: fig.savefig(f'{self.plot_dir}/colour_{phot_type}.pdf')
 
 
 
 
-    def make_size_scatter_plot(self):
+
+    def make_size_plot(self, cmap = 'magma'):
 
         fig, ax = self.default_plot()
 
-        cmap = cm.viridis
-        norm = mpl.colors.Normalize(vmin=0, vmax=3)
+        X = np.log10(self.hf['intrinsic/r_eff_arcsec'][self.detected])
+        Y = X - np.log10(self.hf['observed/r_eff_kron_arcsec'][self.detected])
 
-        r_input = self.hf['intrinsic/r_eff_arcsec'][self.detected]
-        r_obs = self.hf['observed/r_eff_kron_arcsec'][self.detected]
-        log10sn = np.log10(self.hf['observed/sn'][self.detected])
+        x_range = [np.min(X), np.max(X)]
+        y_range = [-0.3, 0.3]
 
-        ax.scatter(r_input, r_obs, s, c = cmap(norm(log10sn)), s=5)
+        H, bin_edges_x, bin_edges_y = np.histogram2d(X,Y,bins=(2*bins,2*bins), range = [x_range,y_range])
 
-        r = range['intrinsic/log10r_eff_kpc']
+        ax.imshow(H.T, origin='lower', extent = [*x_range, *y_range], aspect = 'auto', cmap = cmap)
 
-        # ax.plot(r,r,c='k', alpha=0.1)
-        #
-        # ax.set_xlim(r)
-        # ax.set_ylim(r)
+        ax.axhline(0.0, c='w', alpha=0.5)
 
-        # ax.set_xlabel(r'$\rm z$')
-        # ax.set_ylabel(r'$\rm z_{PZ}$')
-
-        # ax.legend(loc = 'lower left', fontsize = 8)
-
-        if self.show_plots: plt.show()
-        if self.save_plots: fig.savefig(f'{self.output_dir}/{self.output_filename}_size.pdf')
-
-
-    def make_size_plot(self):
-
-        fig, ax = self.default_plot()
-
-        cmap = cm.inferno
-
-        r_input = np.log10(self.hf['intrinsic/r_eff_arcsec'][self.detected])
-        r_obs = np.log10(self.hf['observed/r_eff_kron_arcsec'][self.detected])
-        log10sn = np.log10(self.hf['observed/sn'][self.detected])
-
-        r_range = [np.min(r_input), np.max(r_input)]
-
-
-
-        H, bin_edges_x, bin_edges_y = np.histogram2d(r_input,r_obs,bins=(bins,bins), range = [r_range,r_range])
-
-        ax.imshow(H.T, origin='lower', extent = [*r_range, *r_range], aspect = 'auto', cmap = cmap)
-
-        ax.plot(r_range,r_range,c='w', alpha=0.5)
+        ax.set_xlim(x_range)
+        ax.set_ylim(y_range)
 
         ax.set_xlabel(r'$\rm log_{10}(r_{e}^{input}/arcsec)$')
-        ax.set_ylabel(r'$\rm log_{10}(r_{e}^{obs}/arcsec)$')
+        ax.set_ylabel(r'$\rm log_{10}(r_{e}^{input}/r_{e}^{obs})$')
 
-        # ax.legend(loc = 'lower left', fontsize = 8)
-
-        if show_plots: plt.show()
-        if self.save_plots: fig.savefig(f'{self.output_dir}/{self.output_filename}_size.pdf')
+        if self.show_plots: plt.show()
+        if self.save_plots: fig.savefig(f'{self.plot_dir}/size.pdf')

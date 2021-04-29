@@ -9,22 +9,30 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 import eritlux.simulations.plots as plots
 
 
+output_dir = '/Users/stephenwilkins/Dropbox/Research/data/eritlux'
 
-# output_dir, output_filename = '/Users/stephenwilkins/Dropbox/Research/data/eritlux', 'beta_idealisedimage_EAZY'
+output_filename = '10nJy_beta_idealised_EAZY'
+output_filename = '10nJy_beta_idealisedimage_EAZY'
 
-output_dir, output_filename = 'output', 'beta_idealisedimage_EAZY_100'
+scenario, sed_model, phot_model, pz_model, = output_filename.split('_')
 
 
 
-analyser = plots.analyse(output_dir, output_filename)
+analyser = plots.analyse(output_dir, output_filename, save_plots = True)
 
 analyser.explore_hdf5()
 
-print(analyser.detected)
 
-# analyser.detection_plot('intrinsic/z', 'intrinsic/log10L')
-# analyser.detection_grid(['intrinsic/z', 'intrinsic/log10L', 'intrinsic/beta'])
-# analyser.detection_grid(['intrinsic/z', 'intrinsic/log10L', 'intrinsic/beta', 'intrinsic/log10r_eff_kpc'])
+if phot_model == 'idealised':
 
-# analyser.make_size_plot()
-analyser.make_photometry_plot()
+    analyser.detection_grid(['intrinsic/z', 'intrinsic/log10L', 'intrinsic/beta'])
+    analyser.make_redshift_plot()
+
+if phot_model == 'idealisedimage':
+
+    analyser.detection_grid(['intrinsic/z', 'intrinsic/log10L', 'intrinsic/beta', 'intrinsic/log10r_eff_kpc'])
+    analyser.make_photometry_plot()
+    analyser.make_colour_plot()
+    analyser.make_size_plot()
+    analyser.make_redshift_plot()
+    analyser.pz_grid(['intrinsic/z', 'intrinsic/log10L', 'intrinsic/beta', 'intrinsic/log10r_eff_kpc'])

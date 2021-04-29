@@ -3,17 +3,13 @@
 import numpy as np
 
 from astropy.modeling.models import Sersic2D
-
-
+from astropy.convolution import convolve, convolve_fft, Gaussian2DKernel
 import photutils
-
-# from photutils import detect_sources
-# from photutils import deblend_sources
-# from photutils import source_properties
 
 import FLARE.observatories
 
 
+from . import psf
 
 
 
@@ -83,9 +79,19 @@ class CreateBackground():
 
 
 
+def create_PSFs(field, width_pixels):
 
+    PSF_creator = psf.PSFs(field.filters)
+    width_arcsec = width_pixels * field.pixel_scale
+    PSFs = {}
 
+    for f in field.filters:
+        native_pixel_scale = FLARE.observatories.filter_info[f]['pixel_scale']
+        xx = yy = np.linspace(-(width_arcsec/native_pixel_scale/2.), (width_arcsec/native_pixel_scale/2.), width_pixels)
+        PSFs[f] = PSF_creator[f].f(xx, yy)
+        PSFs[f] /= np.sum(PSFs[f])
 
+    return PSFs
 
 
 def sersic(width_arcsec, width_pixels, r_e_arcsec, n, ellip, theta):
@@ -103,15 +109,7 @@ def sersic(width_arcsec, width_pixels, r_e_arcsec, n, ellip, theta):
 
 
 
-
-
-
-
-
-
-
-
-def create_image(BackgroundCreator, field, p, width_pixels = 51, verbose = False):
+def create_image(BackgroundCreator, field, p, width_pixels = 51, verbose = False, PSFs = None):
 
     width_arcsec = width_pixels * field.pixel_scale
 
@@ -124,7 +122,14 @@ def create_image(BackgroundCreator, field, p, width_pixels = 51, verbose = False
         flux_nJy = p[f'intrinsic/flux/{f}']
         if verbose:
             print(flux_nJy, BackgroundCreator[f].aperture.depth)
-        img[f].mod = mod * flux_nJy * img[f].nJy_to_es
+
+        img[f].mod_nopsf = mod * flux_nJy * img[f].nJy_to_es
+
+        if PSFs:
+            img[f].mod = convolve_fft(img[f].mod_nopsf, PSFs[f])
+        else:
+            img[f].mod = img[f].mod_nopsf
+
         img[f].sci += img[f].mod
 
     return img
