@@ -14,7 +14,7 @@ import eritlux.simulations.simulations
 args = sys.argv
 print(args)
 
-model = 'beta_idealisedimagePSF_EAZY'
+model = '10nJy_beta_cSersic_idealisedimagePSF_eazy'
 
 if len(args) == 1:
     N = 10
