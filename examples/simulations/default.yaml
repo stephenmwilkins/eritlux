@@ -1,0 +1,6 @@
+survey_id : 'SimpleHubble'
+field_id : '10nJy'
+sed_model : 'beta'
+morph_model : 'cSersic'
+phot_model : 'idealisedimagePSF'
+pz_model : 'eazy'

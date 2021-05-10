@@ -6,6 +6,9 @@ import numpy as np
 from . import imagesim
 
 
+import pysep.plots.image
+
+
 def idealised(self, field, detection_filter = None, detection_threshold = 10, size_error = None):
 
     # return idealised photometry based simply on the depth
@@ -35,16 +38,31 @@ def idealised(self, field, detection_filter = None, detection_threshold = 10, si
 
 
 
+def idealisedimage(self, field, detection_filters = None, width_pixels = 51, include_psf = False, verbose = False):
+
+    # --- create idealised image creator
+    image_creator = {f:imagesim.Idealised(f, field) for f in field.filters}
+
+    # --- now call image
+    image(self, field, image_creator, detection_filters = detection_filters, width_pixels = width_pixels, include_psf = include_psf, verbose = verbose)
 
 
-def idealised_image(self, field, detection_filters = None, width_pixels = 51, include_psf = False):
+def realimage(self, field, detection_filters = None, width_pixels = 51, include_psf = False, verbose = False):
 
-    # --- initialise background maker
-    BackgroundCreator = {f:imagesim.CreateBackground(f, field) for f in field.filters}
+    # --- create real image creator
+    image_creator = {f:imagesim.Real(f, field) for f in field.filters}
 
+    # --- now call image
+    image(self, field, image_creator, detection_filters = detection_filters, width_pixels = width_pixels, include_psf = include_psf, verbose = verbose)
+
+
+
+
+def image(self, field, image_creator, detection_filters = None, width_pixels = 51, include_psf = False, verbose = False):
+
+    # --- create output quantities
 
     self.o[f'observed/detected'] = np.zeros(self.N, dtype=bool)
-
 
     quantities = ['r_segment_arcsec','r_eff_kron_arcsec']
 
@@ -56,68 +74,75 @@ def idealised_image(self, field, detection_filters = None, width_pixels = 51, in
             self.o[f'observed/{q}/{f}'] = np.zeros(self.N)
 
 
-    # --- create PSF
 
+    # --- create PSF
     if include_psf:
-        PSFs = imagesim.create_PSFs(field, width_pixels)
+        PSFs = imagesim.create_PSFs(field, width_pixels, final_filter = True)
     else:
         PSFs = None
 
 
     for i in range(self.N):
 
+        if verbose: print('-'*10, i)
+
         ob = self.i(i=i)
 
         # --- create image object
-        imgs = imagesim.create_image(BackgroundCreator, field, ob, width_pixels = 51, PSFs = PSFs)
+        imgs = imagesim.create_image(image_creator, field, ob, width_pixels = 51, PSFs = PSFs)
 
         # --- create detection image
 
         detection_image = imagesim.create_detection_image(imgs, detection_filters)
+
+        if verbose: pysep.plots.image.make_significance_plot(detection_image)
 
         # --- detect sources
         detected, detection_cat, segm_deblended = imagesim.detect_sources(detection_image)
 
         if detected:
 
-            self.o[f'observed/detected'][i] = True
-            self.o[f'observed/sn'][i] = detection_cat.kron_flux[0]/detection_cat.kron_fluxerr[0]
+            if verbose: pysep.plots.image.make_segm_plot(segm_deblended)
 
-            self.o[f'observed/r_segment_arcsec'][i] = detection_cat.equivalent_radius[0].value * field.pixel_scale
-            self.o[f'observed/r_eff_kron_arcsec'][i] = detection_cat.fluxfrac_radius(0.5)[0] * field.pixel_scale
+            x, y = detection_cat.xcentroid, detection_cat.ycentroid
 
-            # --- photometer sources
-            source_cat = imagesim.perform_photometry(detection_cat, segm_deblended, imgs)
+            # --- determine distance from the centre of the image
+            r = np.sqrt((x-(width_pixels-1)/2)**2 + (y-(width_pixels-1)/2)**2)
 
-            for f in field.filters:
-                self.o[f'observed/kron_flux/{f}'][i] = source_cat[f].kron_flux[0]/imgs[f].nJy_to_es
-                self.o[f'observed/kron_fluxerr/{f}'][i] = source_cat[f].kron_fluxerr[0]/imgs[f].nJy_to_es
-                self.o[f'observed/segment_flux/{f}'][i] = source_cat[f].segment_flux[0]/imgs[f].nJy_to_es
-                self.o[f'observed/segment_fluxerr/{f}'][i] = source_cat[f].segment_fluxerr[0]/imgs[f].nJy_to_es
+            # --- determine closest object to the centre of the image
+            j = np.where(r==np.min(r))[0]
+
+            if verbose: print(r)
+
+            # --- only count as detected if within 3 pixels of the centre. 3 is somewhat arbitrary here.
+            if r[j]<3:
+
+                self.o[f'observed/detected'][i] = True
+                self.o[f'observed/sn'][i] = detection_cat.kron_flux[j]/detection_cat.kron_fluxerr[j]
+
+                self.o[f'observed/r_segment_arcsec'][i] = detection_cat.equivalent_radius[j].value * field.pixel_scale
+                self.o[f'observed/r_eff_kron_arcsec'][i] = detection_cat.fluxfrac_radius(0.5)[j] * field.pixel_scale
+
+                # --- photometer sources
+                source_cat = imagesim.perform_photometry(detection_cat, segm_deblended, imgs)
+
+                for f in field.filters:
+                    self.o[f'observed/kron_flux/{f}'][i] = source_cat[f].kron_flux[j]/imgs[f].nJy_to_es
+                    self.o[f'observed/kron_fluxerr/{f}'][i] = source_cat[f].kron_fluxerr[j]/imgs[f].nJy_to_es
+                    self.o[f'observed/segment_flux/{f}'][i] = source_cat[f].segment_flux[j]/imgs[f].nJy_to_es
+                    self.o[f'observed/segment_fluxerr/{f}'][i] = source_cat[f].segment_fluxerr[j]/imgs[f].nJy_to_es
+
+            else:
+
+                detected = False # --- if objects, but none within 3 pixels of the centre then set to undetected
 
 
-    # for q in quantities:
-    #     self.o[f'observed/{q}'] = self.o[f'observed/{q}'][self.o[f'observed/detected']]
+        if verbose: print(detected)
 
+
+
+
+    # --- set kron photometry as default photometry
     for f in field.filters:
-        # for q in ['kron_flux','kron_fluxerr','segment_flux','segment_fluxerr']:
-        #     self.o[f'observed/{q}/{f}'] =  self.o[f'observed/{q}/{f}'][self.o[f'observed/detected']]
-
         self.o[f'observed/flux/{f}'] = self.o[f'observed/kron_flux/{f}']
         self.o[f'observed/flux_err/{f}'] = self.o[f'observed/kron_fluxerr/{f}']
-
-
-
-
-
-
-
-
-
-
-
-def image():
-
-    # use real images and run source extraction and photometry on them
-
-    print('WARNING: Not yet implemented')

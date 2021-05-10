@@ -55,7 +55,8 @@ class Simulation():
 
     intrinsic_beta = intrinsic.beta
     photo_idealised = photo.idealised
-    photo_idealised_image = photo.idealised_image
+    photo_idealisedimage = photo.idealisedimage
+    photo_realimage = photo.realimage
     pz_idealised = pz.idealised
     pz_eazy = pz.eazy
 

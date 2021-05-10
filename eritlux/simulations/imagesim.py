@@ -5,6 +5,8 @@ import numpy as np
 from astropy.modeling.models import Sersic2D
 from astropy.convolution import convolve, convolve_fft, Gaussian2DKernel
 import photutils
+from astropy.io import fits
+
 
 import FLARE.observatories
 
@@ -32,7 +34,8 @@ class Image ():
         return self.sci/self.noise
 
 
-class CreateBackground():
+
+class Idealised():
 
     def __init__(self, filter, field, verbose = False):
 
@@ -65,7 +68,7 @@ class CreateBackground():
             print('noise in pixel: {0:.2f} nJy'.format(self.pixel.noise))
             print('nJy_to_es: {0}'.format(self.nJy_to_es))
 
-    def create_background_image(self, width_pixels):
+    def create_image(self, width_pixels, xy = None):
 
         img = Image()
         img.nJy_to_es = self.nJy_to_es
@@ -78,20 +81,225 @@ class CreateBackground():
         return img
 
 
+    def get_random_location(self):
 
-def create_PSFs(field, width_pixels):
+        """this doesn't do anything for the Idealised image creator but simplifies code later"""
 
-    PSF_creator = psf.PSFs(field.filters)
-    width_arcsec = width_pixels * field.pixel_scale
-    PSFs = {}
+        return None
 
-    for f in field.filters:
-        native_pixel_scale = FLARE.observatories.filter_info[f]['pixel_scale']
-        xx = yy = np.linspace(-(width_arcsec/native_pixel_scale/2.), (width_arcsec/native_pixel_scale/2.), width_pixels)
-        PSFs[f] = PSF_creator[f].f(xx, yy)
-        PSFs[f] /= np.sum(PSFs[f])
+
+
+
+
+
+
+
+
+
+
+
+class Real():
+
+    def __init__(self, filter, field, verbose = False, sci_suffix = 'sci', wht_suffix = 'wht'):
+
+        self.field = field
+        self.verbose = verbose
+
+        if field.mask_file:
+            self.mask = fits.getdata(f'{field.data_dir}/{field.mask_file}')
+        else:
+            self.mask = None
+
+        self.img = ImageFromFile(field.data_dir, filter, mask = self.mask, pixel_scale = field.pixel_scale, verbose = verbose, sci_suffix = sci_suffix, wht_suffix = wht_suffix)
+
+
+
+    def make_cutout(self, x, y, width):
+
+        """extract cut out"""
+
+        sci = np.zeros((width, width))
+        wht = np.zeros((width, width))
+
+        x = int(np.round(x, 0))
+        y = int(np.round(y, 0))
+
+        xmin = x - width // 2
+        xmax = x + width // 2
+        ymin = y - width // 2
+        ymax = y + width // 2
+
+        xstart = 0
+        ystart = 0
+        xend = width
+        yend = width
+
+        if xmin < 0:
+            xstart = -xmin
+            xmin = 0
+        if ymin < 0:
+            ystart = -ymin
+            ymin = 0
+        if xmax > self.img.sci.shape[0]:
+            xend -= xmax - self.img.sci.shape[0]
+            xmax = self.img.sci.shape[0]
+        if ymax > self.img.sci.shape[1]:
+            yend -= ymax - self.img.sci.shape[1]
+            ymax = self.img.sci.shape[1]
+
+        if (width % 2) != 0:
+            xmax += 1
+            ymax += 1
+
+        sci[xstart:xend,ystart:yend] = self.img.sci[xmin:xmax,ymin:ymax]
+        wht[xstart:xend,ystart:yend] = self.img.wht[xmin:xmax,ymin:ymax]
+
+        return ImageFromArrays(sci, wht, self.img.pixel_scale, zeropoint = self.img.zeropoint, nJy_to_es = self.img.nJy_to_es, verbose = self.verbose)
+
+
+    def get_random_location(self):
+
+        """get (single) random location on the image"""
+
+        pos = np.random.choice(self.img.sci.count())
+        return np.take((~self.img.sci.mask).nonzero(), pos, axis=1)
+
+
+    def create_image(self, width_pixels, xy = None):
+
+        """ cut-out an image at a random location """
+
+        return self.make_cutout(*xy, width_pixels)
+
+
+
+
+
+
+
+
+class ImageFromFile(Image):
+
+    def __init__(self, data_dir, filter, mask = None, pixel_scale = 0.06, verbose = False, sci_suffix = 'sci', wht_suffix = 'wht'):
+
+        """generate instance of image class from file"""
+
+        if verbose:
+            print('-'*40)
+            print(f'filter: {filter}')
+            print(f'reading image from: {data_dir}')
+
+
+        f = filter.split('.')[-1]
+
+        self.verbose = verbose
+
+        self.filter = filter
+        self.pixel_scale = pixel_scale
+
+        self.sci = fits.getdata(f'{data_dir}/{f}_{sci_suffix}.fits')
+        self.wht = fits.getdata(f'{data_dir}/{f}_{wht_suffix}.fits')
+
+        if filter in FLARE.observatories.filter_info.keys():
+            self.zeropoint = FLARE.observatories.filter_info[filter]['zeropoint'] # AB magnitude zeropoint
+            self.nJy_to_es = FLARE.observatories.filter_info[filter]['nJy_to_es'] # conversion from nJy to e/s
+        else:
+            self.zeropoint = self.nJy_to_es = None
+
+        self.mask = mask
+
+        if type(mask) == np.ndarray:
+            self.mask = mask
+        else:
+            self.mask = (self.wht == 0)
+
+        self.sci = np.ma.masked_array(self.sci, mask = self.mask)
+        self.wht = np.ma.masked_array(self.wht, mask = self.mask)
+
+        if verbose:
+            print(f'shape: ', self.sci.shape)
+
+        self.noise = 1./np.sqrt(self.wht)
+        # self.sig = self.sci/self.noise
+
+
+
+class ImageFromArrays(Image):
+
+    def __init__(self, sci, wht, pixel_scale, zeropoint = False, nJy_to_es = False,  verbose = False):
+
+        """generate instance of image class from cutout"""
+
+        self.verbose = verbose
+
+        self.pixel_scale = pixel_scale
+        self.zeropoint = zeropoint # AB magnitude zeropoint
+        self.nJy_to_es = nJy_to_es # conversion from nJy to e/s
+
+        self.sci = sci
+        self.wht = wht
+        self.noise = 1./np.sqrt(self.wht)
+        # self.sig = self.sci/self.noise
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def create_PSFs(field, width_pixels, final_filter = True):
+
+    if final_filter:
+        filter = field.filters[-1]
+        PSF = create_PSF(filter, field, width_pixels)
+        PSFs = {f:PSF for f in field.filters}
+    else:
+        PSFs = {f:create_PSF(f, field, width_pixels) for f in field.filters}
 
     return PSFs
+
+
+def create_PSF(filter, field, width_pixels):
+
+    PSF_creator = psf.PSF(filter)
+    width_arcsec = width_pixels * field.pixel_scale
+
+    native_pixel_scale = FLARE.observatories.filter_info[filter]['pixel_scale']
+    xx = yy = np.linspace(-(width_arcsec/native_pixel_scale/2.), (width_arcsec/native_pixel_scale/2.), width_pixels)
+    PSF = PSF_creator.f(xx, yy)
+    PSF /= np.sum(PSF)
+
+    return PSF
+
+
+
 
 
 def sersic(width_arcsec, width_pixels, r_e_arcsec, n, ellip, theta):
@@ -109,11 +317,14 @@ def sersic(width_arcsec, width_pixels, r_e_arcsec, n, ellip, theta):
 
 
 
-def create_image(BackgroundCreator, field, p, width_pixels = 51, verbose = False, PSFs = None):
+def create_image(image_creator, field, p, width_pixels = 51, verbose = False, PSFs = None):
 
     width_arcsec = width_pixels * field.pixel_scale
 
-    img = {f:BackgroundCreator[f].create_background_image(width_pixels) for f in field.filters}
+    xy = next(iter(image_creator.values())).get_random_location()
+    if verbose: print(xy)
+
+    img = {f:image_creator[f].create_image(width_pixels, xy) for f in field.filters}
 
     # --- create profile
     mod = sersic(width_arcsec, width_pixels, p['intrinsic/r_eff_arcsec'], p['intrinsic/n'], p['intrinsic/ellip'], p['intrinsic/theta'])

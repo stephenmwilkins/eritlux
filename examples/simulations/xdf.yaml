@@ -1,0 +1,6 @@
+survey_id : 'XDF'
+field_id : 'dXDF'
+sed_model : 'beta'
+morph_model : 'cSersic'
+phot_model : 'realimagePSF'
+pz_model : 'eazy'
