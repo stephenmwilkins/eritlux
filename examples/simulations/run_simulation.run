@@ -27,5 +27,5 @@
 # needs to be copied, and then execute the program
 ######################################################################
 
-python ./run_simulation.py xdf_idealised 100 $SGE_TASK_ID /research/astro/flare/data/eritlux
-python ./run_simulation.py xdf 100 $SGE_TASK_ID /research/astro/flare/data/eritlux
+python ./run_simulation.py xdf_idealised 10000 $SGE_TASK_ID /research/astro/flare/data/eritlux
+python ./run_simulation.py xdf 10000 $SGE_TASK_ID /research/astro/flare/data/eritlux

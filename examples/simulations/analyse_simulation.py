@@ -15,6 +15,8 @@ output_filename = 'SimpleHubble_10nJy_beta_simple_idealised_eazy'
 output_filename = 'SimpleHubble_10nJy_beta_cSersic_idealisedimage_eazy'
 # output_filename = 'SimpleHubble_10nJy_beta_cSersic_idealisedimagePSF_eazy'
 
+output_filename = 'XDF_dXDF_beta_cSersic_realimagePSF_eazy'
+
 survey_id, field_id, sed_model, morph_model, phot_model, pz_model, = output_filename.split('_')
 
 
@@ -28,7 +30,7 @@ if phot_model == 'idealised':
     analyser.detection_grid(['intrinsic/z', 'intrinsic/log10L', 'intrinsic/beta'])
     analyser.make_redshift_plot()
 
-if phot_model in ['idealisedimage','idealisedimagePSF']:
+if phot_model in ['idealisedimage','idealisedimagePSF', 'realimage', 'realimagePSF']:
 
     analyser.detection_grid(['intrinsic/z', 'intrinsic/log10L', 'intrinsic/beta', 'intrinsic/log10r_eff_kpc'])
     analyser.make_photometry_plot()
