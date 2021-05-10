@@ -8,8 +8,6 @@ import FLARE.SED.models
 import FLARE.filters
 
 
-
-
 def beta(self, filters):
 
     rest_lam = np.arange(0., 5000., 1.)

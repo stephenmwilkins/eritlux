@@ -63,6 +63,8 @@ class Idealised():
         self.pixel.noise_es = self.pixel.noise * self.nJy_to_es # convert from nJy to e/s
 
         if verbose:
+            print('-'*20)
+            print(filter)
             print('assumed aperture radius: {0:.2f} pix'.format(self.aperture.radius))
             print('noise in aperture: {0:.2f} nJy'.format(self.aperture.noise))
             print('noise in pixel: {0:.2f} nJy'.format(self.pixel.noise))

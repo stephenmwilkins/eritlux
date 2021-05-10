@@ -5,12 +5,16 @@ import os
 import yaml
 import numpy as np
 
+import time
 
 import FLARE.surveys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 import eritlux.simulations.simulations
+
+
+starting_time = time.time()
 
 run = True
 verbose = False
@@ -70,26 +74,35 @@ field_id = p['field_id']
 sed_model = p['sed_model']
 morph_model = p['morph_model']
 phot_model = p['phot_model']
-phot_model = p['phot_model']
 pz_model = p['pz_model']
+detection_filters = p['detection_filters']
+
+
+pz_model = 'none'
+
+print(detection_filters)
 
 field = FLARE.surveys.surveys[survey_id].fields[field_id]
-detection_filters = [f'Hubble.WFC3.{f}' for f in ['f105w', 'f125w', 'f160w']] # --- should hard-code this into the survey module
+
 
 output_filename = '_'.join([survey_id, field_id, sed_model, morph_model, phot_model, pz_model, output_suffix])
 
 print(output_filename)
+print(field.depths)
 
 
 if run:
 
     sim = eritlux.simulations.simulations.Simulation(morph_model = morph_model, sed_model = sed_model, run_id = run_id)
+    if verbose: print(f'initialised: {np.round(time.time()-starting_time,1)}')
     sim.n(N)
+    if verbose: print(f'input samples generated: {np.round(time.time()-starting_time,1)}')
 
     if sed_model == 'beta':
         sim.intrinsic_beta(field.filters) # produce intrinsic photometry
     else:
         print('WARNING: SED model not implemented')
+    if verbose: print(f'fluxes calculated: {np.round(time.time()-starting_time,1)}')
 
     if morph_model == 'simple':
         sim.photo_idealised_image(field) # produce intrinsic photometry
@@ -98,6 +111,8 @@ if run:
             sim.photo_idealisedimage(field, detection_filters = detection_filters, include_psf = False, verbose = verbose) # produce observed photometry
         elif phot_model == 'idealisedimagePSF':
             sim.photo_idealisedimage(field, detection_filters = detection_filters, include_psf = True, verbose = verbose) # produce observed photometry
+        elif phot_model == 'realimage':
+            sim.photo_realimage(field, detection_filters = detection_filters, include_psf = False, verbose = verbose) # produce observed photometry
         elif phot_model == 'realimagePSF':
             sim.photo_realimage(field, detection_filters = detection_filters, include_psf = True, verbose = verbose) # produce observed photometry
         else:

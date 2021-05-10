@@ -4,3 +4,4 @@ sed_model : 'beta'
 morph_model : 'cSersic'
 phot_model : 'realimagePSF'
 pz_model : 'eazy'
+detection_filters : ['Hubble.WFC3.f105w', 'Hubble.WFC3.f125w', 'Hubble.WFC3.f140w', 'Hubble.WFC3.f160w']
