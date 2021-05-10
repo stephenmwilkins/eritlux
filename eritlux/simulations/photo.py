@@ -6,7 +6,7 @@ import numpy as np
 from . import imagesim
 
 
-import pysep.plots.image
+# import pysep.plots.image
 
 
 def idealised(self, field, detection_filter = None, detection_threshold = 10, size_error = None):
@@ -95,14 +95,14 @@ def image(self, field, image_creator, detection_filters = None, width_pixels = 5
 
         detection_image = imagesim.create_detection_image(imgs, detection_filters)
 
-        if verbose: pysep.plots.image.make_significance_plot(detection_image)
+        # if verbose: pysep.plots.image.make_significance_plot(detection_image)
 
         # --- detect sources
         detected, detection_cat, segm_deblended = imagesim.detect_sources(detection_image)
 
         if detected:
 
-            if verbose: pysep.plots.image.make_segm_plot(segm_deblended)
+            # if verbose: pysep.plots.image.make_segm_plot(segm_deblended)
 
             x, y = detection_cat.xcentroid, detection_cat.ycentroid
 
