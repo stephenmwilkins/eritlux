@@ -77,9 +77,6 @@ phot_model = p['phot_model']
 pz_model = p['pz_model']
 detection_filters = p['detection_filters']
 
-
-pz_model = 'none'
-
 print(detection_filters)
 
 field = FLARE.surveys.surveys[survey_id].fields[field_id]
