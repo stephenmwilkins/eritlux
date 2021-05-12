@@ -18,6 +18,7 @@ starting_time = time.time()
 
 run = True
 verbose = False
+select = True
 
 args = sys.argv
 
@@ -119,5 +120,10 @@ if run:
         sim.pz_eazy() # measure photometric redshifts
     else:
         print('WARNING: pz model not implemented')
+
+    if select:
+        sim.apply_selection()
+        if verbose: print(sim.o['observed/selected'][:])
+
 
     sim.export_to_HDF5(output_dir, output_filename)

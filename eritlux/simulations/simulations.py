@@ -10,6 +10,7 @@ import FLARE
 from . import intrinsic
 from . import photo
 from . import pz
+from .. import selection
 
 
 class delta():
@@ -59,10 +60,12 @@ class Simulation():
     photo_realimage = photo.realimage
     pz_idealised = pz.idealised
     pz_eazy = pz.eazy
+    apply_selection = selection.apply_selection
 
 
-    def __init__(self, morph_model = 'simple', sed_model = 'beta', run_id = 0, prange = False, cosmo = FLARE.default_cosmo()):
+    def __init__(self, morph_model = 'simple', sed_model = 'beta', run_id = 0, prange = False, cosmo = FLARE.default_cosmo(), verbose = False):
 
+        self.verbose = verbose
         self.run_id = str(run_id) # needed here to label the EAZY run, could do something else? e.g. random
         self.morph_model = morph_model
         self.profile_model = morph_model

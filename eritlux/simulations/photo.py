@@ -29,10 +29,10 @@ def idealised(self, field, detection_filter = None, detection_threshold = 10, si
     self.o['observed/detected'] = detected
 
     for k, v in flux.items():
-        self.o[f'observed/flux/{k}'] = v
+        self.o[f'observed/{k}/flux'] = v
 
     for k, v in flux_err.items():
-        self.o[f'observed/flux_err/{k}'] = v
+        self.o[f'observed/{k}/flux_err'] = v
 
 
 
@@ -66,11 +66,11 @@ def image(self, field, image_creator, detection_filters = None, width_pixels = 5
     quantities = ['r_segment_arcsec','r_eff_kron_arcsec']
 
     for q in ['sn'] + quantities:
-        self.o[f'observed/{q}'] = np.zeros(self.N)
+        self.o[f'observed/detection/{q}'] = np.zeros(self.N)
 
     for f in field.filters:
         for q in ['kron_flux','kron_fluxerr','segment_flux','segment_fluxerr']:
-            self.o[f'observed/{q}/{f}'] = np.zeros(self.N)
+            self.o[f'observed/{f}/{q}'] = np.zeros(self.N)
 
 
     # --- create PSF
@@ -115,21 +115,21 @@ def image(self, field, image_creator, detection_filters = None, width_pixels = 5
             if r[j]<3:
 
                 self.o[f'observed/detected'][i] = True
-                self.o[f'observed/sn'][i] = detection_cat.kron_flux[j]/detection_cat.kron_fluxerr[j]
+                self.o[f'observed/detection/sn'][i] = detection_cat.kron_flux[j]/detection_cat.kron_fluxerr[j]
 
-                self.o[f'observed/r_segment_arcsec'][i] = detection_cat.equivalent_radius[j].value * field.pixel_scale
-                self.o[f'observed/r_eff_kron_arcsec'][i] = detection_cat.fluxfrac_radius(0.5)[j] * field.pixel_scale
+                self.o[f'observed/detection/r_segment_arcsec'][i] = detection_cat.equivalent_radius[j].value * field.pixel_scale
+                self.o[f'observed/detection/r_eff_kron_arcsec'][i] = detection_cat.fluxfrac_radius(0.5)[j] * field.pixel_scale
 
                 # --- photometer sources
                 source_cat = imagesim.perform_photometry(detection_cat, segm_deblended, imgs)
 
                 for f in field.filters:
-                    self.o[f'observed/kron_flux/{f}'][i] = source_cat[f].kron_flux[j]/imgs[f].nJy_to_es
-                    self.o[f'observed/kron_fluxerr/{f}'][i] = source_cat[f].kron_fluxerr[j]/imgs[f].nJy_to_es
-                    self.o[f'observed/segment_flux/{f}'][i] = source_cat[f].segment_flux[j]/imgs[f].nJy_to_es
-                    self.o[f'observed/segment_fluxerr/{f}'][i] = source_cat[f].segment_fluxerr[j]/imgs[f].nJy_to_es
+                    self.o[f'observed/{f}/kron_flux'][i] = source_cat[f].kron_flux[j]/imgs[f].nJy_to_es
+                    self.o[f'observed/{f}/kron_fluxerr'][i] = source_cat[f].kron_fluxerr[j]/imgs[f].nJy_to_es
+                    self.o[f'observed/{f}/segment_flux'][i] = source_cat[f].segment_flux[j]/imgs[f].nJy_to_es
+                    self.o[f'observed/{f}/segment_fluxerr'][i] = source_cat[f].segment_fluxerr[j]/imgs[f].nJy_to_es
 
-                print(i, np.int(self.o[f'intrinsic/flux/{field.filters[-1]}'][i]), np.int(self.o[f'observed/kron_flux/{field.filters[-1]}'][i]))
+                if self.verbose: print(i, np.int(self.o[f'intrinsic/flux/{field.filters[-1]}'][i]), np.int(self.o[f'observed/{field.filters[-1]}/kron_flux'][i]))
 
             else:
                 detected = False # --- if objects, but none within 3 pixels of the centre then set to undetected
@@ -139,5 +139,5 @@ def image(self, field, image_creator, detection_filters = None, width_pixels = 5
 
     # --- set kron photometry as default photometry
     for f in field.filters:
-        self.o[f'observed/flux/{f}'] = self.o[f'observed/kron_flux/{f}']
-        self.o[f'observed/flux_err/{f}'] = self.o[f'observed/kron_fluxerr/{f}']
+        self.o[f'observed/{f}/flux'] = self.o[f'observed/{f}/kron_flux']
+        self.o[f'observed/{f}/flux_err'] = self.o[f'observed/{f}/kron_fluxerr']
