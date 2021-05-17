@@ -7,11 +7,11 @@ import numpy as np
 from astropy.io import fits
 from scipy import interpolate
 
-import FLARE
-import FLARE.filters
+import flare
+import flare.filters
 
 
-FLARE_dir = FLARE.FLARE_dir
+FLARE_dir = flare.FLARE_dir
 
 from astropy.convolution import convolve, convolve_fft, Gaussian2DKernel
 
@@ -100,7 +100,7 @@ class HubblePSF():
 
         self.ndim = self.data.shape[0]
 
-        self.width = self.ndim * FLARE.observatories.filter_info[f]['pixel_scale']/sub # "
+        self.width = self.ndim * flare.observatories.filter_info[f]['pixel_scale']/sub # "
 
         if verbose: print('ndim: {0}'.format(self.ndim))
 

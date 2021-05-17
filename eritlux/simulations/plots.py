@@ -7,7 +7,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-import FLARE.plt as fplt
+import flare.plt as fplt
 
 
 labels = {}
@@ -176,7 +176,26 @@ class Analyser:
             bin_centres = bin_edges[:-1] + (bin_edges[1]-bin_edges[0])*0.5
 
             ax.plot(bin_centres, H_detected/H_all, c='0.5')
+
+            # --- if selected also plot the detected fraction
+            if selected:
+
+                X = self.hf[x]
+
+                H_all, bin_edges = np.histogram(X, bins = bins, range = range[x])
+                H_detected, bin_edges = np.histogram(X[self.detected], bins = bins, range = range[x])
+
+                bin_centres = bin_edges[:-1] + (bin_edges[1]-bin_edges[0])*0.5
+
+                ax.plot(bin_centres, H_detected/H_all, c='0.3', ls = ':')
+
+
+
+
             ax.set_ylim([-0.05,1.05])
+
+
+
 
             # ax.text(0.5, 0.5, f'x{i}', transform = ax.transAxes)
 
@@ -187,16 +206,16 @@ class Analyser:
         fig.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), cax=cax, orientation='horizontal')
 
         if selected:
-            cax.set_xlabel(rf'$\rm detected\ fraction$')
-        else:
             cax.set_xlabel(rf'$\rm selected\ fraction$')
+        else:
+            cax.set_xlabel(rf'$\rm detected\ fraction$')
 
 
         if self.save_plots:
             if selected:
-                fig.savefig(f'{self.plot_dir}/detection_grid.pdf')
-            else:
                 fig.savefig(f'{self.plot_dir}/selection_grid.pdf')
+            else:
+                fig.savefig(f'{self.plot_dir}/detection_grid.pdf')
 
         if self.show_plots: plt.show()
 

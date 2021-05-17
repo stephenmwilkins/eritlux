@@ -5,7 +5,7 @@ import numpy as np
 from scipy.stats import uniform
 import h5py
 
-import FLARE
+import flare
 
 from . import intrinsic
 from . import photo
@@ -63,7 +63,7 @@ class Simulation():
     apply_selection = selection.apply_selection
 
 
-    def __init__(self, morph_model = 'simple', sed_model = 'beta', run_id = 0, prange = False, cosmo = FLARE.default_cosmo(), verbose = False):
+    def __init__(self, morph_model = 'simple', sed_model = 'beta', run_id = 0, prange = False, cosmo = flare.default_cosmo(), verbose = False):
 
         self.verbose = verbose
         self.run_id = str(run_id) # needed here to label the EAZY run, could do something else? e.g. random

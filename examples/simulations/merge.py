@@ -14,7 +14,7 @@ output_dir = '/Users/stephenwilkins/Dropbox/Research/data/eritlux'
 # output_filename_pattern = 'XDF_dXDF_beta_cSersic_idealisedimagePSF_none'
 
 output_filename_pattern = 'XDF_dXDF_beta_cSersic_realimagePSF_eazy'
-# output_filename_pattern = 'XDF_dXDF_beta_cSersic_idealisedimagePSF_eazy'
+output_filename_pattern = 'XDF_dXDF_beta_cSersic_idealisedimagePSF_eazy'
 
 N_sim = 10000
 N = 100

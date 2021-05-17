@@ -6,8 +6,8 @@ from astropy.io import fits
 # from photutils import CircularAperture
 # from photutils import aperture_photometry
 
-import FLARE
-import FLARE.observatories
+import flare
+import flare.observatories
 
 class empty: pass
 
@@ -146,9 +146,9 @@ class ImageFromFile(Image):
         self.sci = fits.getdata(f'{data_dir}/{f}_{sci_suffix}.fits')
         self.wht = fits.getdata(f'{data_dir}/{f}_{wht_suffix}.fits')
 
-        if filter in FLARE.observatories.filter_info.keys():
-            self.zeropoint = FLARE.observatories.filter_info[filter]['zeropoint'] # AB magnitude zeropoint
-            self.nJy_to_es = FLARE.observatories.filter_info[filter]['nJy_to_es'] # conversion from nJy to e/s
+        if filter in flare.observatories.filter_info.keys():
+            self.zeropoint = flare.observatories.filter_info[filter]['zeropoint'] # AB magnitude zeropoint
+            self.nJy_to_es = flare.observatories.filter_info[filter]['nJy_to_es'] # conversion from nJy to e/s
         else:
             self.zeropoint = self.nJy_to_es = None
 

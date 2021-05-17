@@ -7,7 +7,7 @@ import numpy as np
 
 import time
 
-import FLARE.surveys
+import flare.surveys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
@@ -80,7 +80,7 @@ detection_filters = p['detection_filters']
 
 print(detection_filters)
 
-field = FLARE.surveys.surveys[survey_id].fields[field_id]
+field = flare.surveys.surveys[survey_id].fields[field_id]
 
 
 output_filename = '_'.join([survey_id, field_id, sed_model, morph_model, phot_model, pz_model, output_suffix])

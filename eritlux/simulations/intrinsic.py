@@ -3,9 +3,9 @@
 import numpy as np
 
 
-import FLARE
-import FLARE.SED.models
-import FLARE.filters
+import flare
+import flare.SED.models
+import flare.filters
 
 
 def beta(self, filters):
@@ -19,8 +19,8 @@ def beta(self, filters):
 
     for i, (z, beta, log10L) in enumerate(zip(self.o['intrinsic/z'], self.o['intrinsic/beta'], self.o['intrinsic/log10L'])):
 
-        F = FLARE.filters.add_filters(filters, new_lam = rest_lam * (1. + z))
-        sed = FLARE.SED.models.beta(rest_lam, beta, 10**log10L, normalisation_wavelength = 1500.)
+        F = flare.filters.add_filters(filters, new_lam = rest_lam * (1. + z))
+        sed = flare.SED.models.beta(rest_lam, beta, 10**log10L, normalisation_wavelength = 1500.)
 
         sed.get_fnu(self.cosmo, z) # --- generate observed frame spectrum (necessary to get broad band photometry)
         sed.get_Fnu(F) # --- generate broadband photometry

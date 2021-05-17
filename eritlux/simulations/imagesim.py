@@ -8,7 +8,7 @@ import photutils
 from astropy.io import fits
 
 
-import FLARE.observatories
+import flare.observatories
 
 
 from . import psf
@@ -28,6 +28,14 @@ class empty(): pass
 class Image ():
 
     def __init__(self):
+
+        self.nJy_to_es = None # conversion from nJy_to_es
+        self.pixel_scale = None # size of pixels in arcsec
+        self.noise = None # noise map. For idealised images this is uniform
+        self.wht = None # 1./noise**2
+        self.bkg = None # background map
+        self.sci = None # the flux map
+
         pass
 
     def sn(self):
@@ -41,7 +49,7 @@ class Idealised():
 
         self.filter = filter
         self.pixel_scale = field.pixel_scale
-        self.nJy_to_es = FLARE.observatories.get_nJy_to_es(filter) # conversion from nJy to e/s
+        self.nJy_to_es = flare.observatories.get_nJy_to_es(filter) # conversion from nJy to e/s
 
         self.aperture = empty()
         self.aperture.depth = field.depths[filter]
@@ -202,9 +210,9 @@ class ImageFromFile(Image):
         self.sci = fits.getdata(f'{data_dir}/{f}_{sci_suffix}.fits')
         self.wht = fits.getdata(f'{data_dir}/{f}_{wht_suffix}.fits')
 
-        if filter in FLARE.observatories.filter_info.keys():
-            self.zeropoint = FLARE.observatories.filter_info[filter]['zeropoint'] # AB magnitude zeropoint
-            self.nJy_to_es = FLARE.observatories.filter_info[filter]['nJy_to_es'] # conversion from nJy to e/s
+        if filter in flare.observatories.filter_info.keys():
+            self.zeropoint = flare.observatories.filter_info[filter]['zeropoint'] # AB magnitude zeropoint
+            self.nJy_to_es = flare.observatories.filter_info[filter]['nJy_to_es'] # conversion from nJy to e/s
         else:
             self.zeropoint = self.nJy_to_es = None
 
@@ -293,7 +301,7 @@ def create_PSF(filter, field, width_pixels):
     PSF_creator = psf.PSF(filter)
     width_arcsec = width_pixels * field.pixel_scale
 
-    native_pixel_scale = FLARE.observatories.filter_info[filter]['pixel_scale']
+    native_pixel_scale = flare.observatories.filter_info[filter]['pixel_scale']
     xx = yy = np.linspace(-(width_arcsec/native_pixel_scale/2.), (width_arcsec/native_pixel_scale/2.), width_pixels)
     PSF = PSF_creator.f(xx, yy)
     PSF /= np.sum(PSF)

@@ -3,9 +3,9 @@
 
 import numpy as np
 
-import FLARE
-import FLARE.filters
-import FLARE.obs.EAZY as flareazy
+import flare
+import flare.filters
+import flare.obs.EAZY as flareazy
 
 def idealised(sim, pz_error = lambda x: 0.1, best = True):
 
@@ -24,7 +24,7 @@ def idealised(sim, pz_error = lambda x: 0.1, best = True):
 
 
 
-def eazy(self, eazy_working_dir = '.', path_to_EAZY = f'{FLARE.FLARE_dir}/software/eazy-photoz', best = True):
+def eazy(self, eazy_working_dir = '.', path_to_EAZY = f'{flare.FLARE_dir}/software/eazy-photoz', best = True):
 
     id = self.run_id
 
@@ -32,7 +32,7 @@ def eazy(self, eazy_working_dir = '.', path_to_EAZY = f'{FLARE.FLARE_dir}/softwa
 
     N = self.N
     filters = self.filters # filter list
-    F = FLARE.filters.add_filters(filters) # make FLARE filter object
+    F = flare.filters.add_filters(filters) # make FLARE filter object
 
     # --- run EAZY
     flareazy.eazy(ID=id).run(self.o, F, detected = self.o['observed/detected'], path = lambda f: f'observed/{f}')
