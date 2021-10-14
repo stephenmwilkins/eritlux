@@ -3,6 +3,8 @@
 # ****************************THIS NEEDS TO BE TIGHTENED UP AFTER SOME TESTING*********************************
 # ****************************************REWORKING IN PROGRESS************************************************
 
+import zeus
+
 import numpy as np
 
 from scipy.optimize import curve_fit
@@ -108,7 +110,7 @@ def model_2d2(z, log10L, p, model):
     return np.array(arr)
 
 
-class fitter():
+class fitter_emcee():
 
 
     def __init__(self, beta_model):
@@ -168,6 +170,65 @@ class fitter():
 
         return samples
 
+
+class fitter_zeus():
+
+
+    def __init__(self, beta_model):
+
+        self.input = beta_model.input
+        self.input_z = beta_model.input_z
+
+        self.parameters = ['a11','a12','a21', 'a22', 'b11', 'b12', 'b21', 'b22']
+        self.priors = {}
+
+    def lnlike(self, params):
+        """log Likelihood function"""
+        # Note: this uses a weighting that attempts to penalise low object counts
+
+        v = 0.
+        for zi in self.input_z:
+            a1 = params[0] * (zi - 6) + params[1]
+            a2 = params[2] * (zi - 6) + params[3]
+            b1 = params[4] * (zi - 6) + params[5]
+            b2 = params[6] * (zi - 6) + params[7]
+
+            v += np.sum(-0.5 * (self.input['z' + str(zi)].beta_biweight - piecewise(self.input['z' + str(zi)].log10L, a1, a2, b1, b2)) ** 2 / (self.input['z' + str(zi)].beta_biweight_err[1] ** 2) *
+                        np.sqrt(np.sum(self.input['z' + str(zi)].num_sources)/np.sum(self.input['z4'].num_sources)))
+
+        if not np.isfinite(v):
+            return -np.inf
+
+        return v
+
+    def lnprob(self, params):
+        """Log probability function"""
+
+        p = {parameter: params[i] for i, parameter in enumerate(self.parameters)}
+
+        lp = np.sum([self.priors[parameter].logpdf(p[parameter]) for parameter in self.parameters])
+
+        if not np.isfinite(lp):
+            return -np.inf
+
+        return lp + self.lnlike(params)
+
+
+    def fit(self, nwalkers = 50, nsamples = 1000, burn = 200):
+
+        self.ndim = len(self.parameters)
+        self.nwalkers = nwalkers
+        self.nsamples = nsamples
+
+        p0 = [ [self.priors[parameter].rvs() for parameter in self.parameters] for i in range(nwalkers)]
+
+        self.sampler = zeus.EnsembleSampler(nwalkers, self.ndim, self.lnprob, args=())  # Initialise the sampler
+        self.sampler.run_mcmc(p0, nsamples+burn)  # Run sampling
+
+        chains = self.sampler.get_chain(flat=True, discard=burn, thin=10)
+        samples = {p: chains[:,ip] for ip, p in enumerate(self.parameters)}
+
+        return samples
 
 
 class BetaOfZ:
@@ -231,38 +292,38 @@ class BetaOfZ:
             return np.random.normal(self.model(log10L, z_line(z, *self.zp['a1']), z_line(z, *self.zp['b1']), z_line(z, *self.zp['a2'])), sigma)
 
 
-class WorkInProgress(BetaOfZ):
+class betafitter(BetaOfZ):
 
-    def __init__(self, z_range=[4, 6]):
+    def __init__(self):
 
         print(self.ref)
 
-        self.labels = ['z'+str(item) for item in np.linspace(*z_range, z_range[1]-z_range[0]+1, dtype=int)]
+        self.labels = ['z'+str(item) for item in np.linspace(*self.z_range, self.z_range[1]-self.z_range[0]+1, dtype=int)]
 
         self.input = {}
         for label in self.labels: self.input[label] = self.data[label]
 
-        self.input_z = np.array(self.redshift)[(np.array(self.redshift) >= z_range[0])&(np.array(self.redshift)<= z_range[1])]
+        self.input_z = np.array(self.redshift)[(np.array(self.redshift) >= self.z_range[0])&(np.array(self.redshift)<= self.z_range[1])]
 
-        self.lp = self.beta_of_log10L_coeffs()
+        self.lp, self.le = self.beta_of_log10L_coeffs()
         self.chisq = self.chisquared()
+
 
         super().__init__()
 
     def beta_of_log10L_coeffs(self):
 
-
-        # MAKE THIS TO TRY DEFAULT BOUNDS UNLESS USER INPUT BOUNDS GIVEN
-
         lp = {}
+        le = {}
 
-        lims = [[0, 0, -10, 27],[np.inf, np.inf, 0, 30]]
+        lims = self.fit_bounds
         for label in self.labels:
             p_opt, p_cov = curve_fit(self.model, self.input[label].log10L, self.input[label].beta_biweight, bounds=lims) #sigma=self.input[label].beta_biweight_err[1], absolute_sigma=True,
 
             lp[label] = p_opt
+            le[label] = p_cov
 
-        return lp
+        return lp, le
 
     def chisquared(self):
 
@@ -281,14 +342,17 @@ class WorkInProgress(BetaOfZ):
         return chisq
 
 
-class Bouwens2014(WorkInProgress):
+class Bouwens2014(betafitter):
     # --- \beta(L) evolution after Bouwens et al. (2014)
 
-    def __init__(self, model):
+    def __init__(self, model, z_range=[4, 6], fit_bounds=[[0, 0, -10, 27],[np.inf, np.inf, 0, 30]]):
         # Contains model redshift range (must be increasing) and corresponding LF evolution model parameters
         # Custom models should be created following the same form
 
         self.model = model
+
+        self.z_range = z_range
+        self.fit_bounds = fit_bounds
 
         self.ref = 'Bouwens+2014'
 
