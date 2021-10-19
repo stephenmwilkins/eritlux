@@ -15,7 +15,7 @@ from scipy.special import erf
 
 from scipy.interpolate import interp1d
 
-from FLARE.photom import M_to_lum
+from flare.photom import M_to_lum
 
 from types import SimpleNamespace
 

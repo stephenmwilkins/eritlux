@@ -1,0 +1,6 @@
+astropy
+numpy
+matplotlib
+corner
+zeus
+-e git://github.com/stephenmwilkins/flare.git#egg=flare

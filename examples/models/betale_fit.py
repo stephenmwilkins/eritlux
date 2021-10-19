@@ -3,6 +3,12 @@
 import numpy as np
 import scipy.stats
 
+
+# --- this allows us to import the module from the directory above. Useful for testing before "deploying" the module
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
 import eritlux.models.betale as beta_fitter
 
 import time
@@ -45,13 +51,13 @@ print(f'took {t2-t1} seconds')
 # Here we export the results and display median plus 68-percentile range limits
 import _pickle as pickle
 
-pickle.dump(samples, open('../../../betafit_test/samples.p','wb'))
+pickle.dump(samples, open('output/betale_fit_samples.p','wb'))
 
 analysis = beta_fitter.analyse(samples, parameters = ['a11','a12','a21', 'a22', 'b11', 'b12', 'b21', 'b22'])
 analysis.P() # print central 68 and median with Truth if provided
 
 # Save the full corner plot for samples
-analysis.corner(filename = '../../../betafit_test/corner.pdf') # produce corner plot
+analysis.corner(filename = 'output/betale_fit_corner.pdf') # produce corner plot
 
 
 # ADD EXAMPLE FITS!!! with the \beta(L) curves shown

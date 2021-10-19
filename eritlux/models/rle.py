@@ -4,7 +4,7 @@ import numpy as np
 
 from scipy.optimize import curve_fit
 
-from FLARE.photom import M_to_lum
+from flare.photom import M_to_lum
 
 
 def line(z, a, b):
@@ -166,4 +166,3 @@ class Kawamata2018(model):
         self.gamma_err = [[0.06, 0.14, 0.14], [0.06, 0.13, 0.13]]       # Error on the slope of the size-luminosity relation
 
         super().__init__()
-

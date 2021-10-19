@@ -7,11 +7,11 @@ import scipy.interpolate as cpi
 
 import csv
 
-from FLARE.photom import M_to_lum, lum_to_M
-import FLARE.core
+from flare.photom import M_to_lum, lum_to_M
+import flare.core
 
-import FLARE.LF.lf_parameters as lf_parameters
-import FLARE.LF.binned_lf as binned_lf
+import flare.LF.lf_parameters as lf_parameters
+import flare.LF.binned_lf as binned_lf
 
 
 #

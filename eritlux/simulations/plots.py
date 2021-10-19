@@ -220,7 +220,71 @@ class Analyser:
         if self.show_plots: plt.show()
 
 
+    def detection_grid_compact(self, properties, selected = False, cmap = 'inferno'):
 
+        # a compact version of the above
+
+        if selected:
+            s = self.selected
+        else:
+            s = self.detected
+
+        N = len(properties)
+
+        fig, axes = plt.subplots(N-1, N-1, figsize = (4,4))
+        plt.subplots_adjust(left=0.15, top=0.95, bottom=0.15, right=0.95, wspace=0.02, hspace=0.02)
+
+        # axes = axes.T
+
+        for i in np.arange(N-1):
+            for j in np.arange(N-1):
+                axes[i, j].set_axis_off()
+
+        for i,x in enumerate(properties[:-1]):
+            for j,y in enumerate(properties[1:][::-1]):
+
+                jj = N-2-j
+                ii = i
+
+                ax = axes[jj, ii]
+
+                if j+i<(N-1):
+                    ax.set_axis_on()
+                    ax = self.detection_panel(ax, x, y, s = s, cmap = cmap)
+
+                if i == 0: # first column
+                    ax.set_ylabel(rf'$\rm {labels[y]}$')
+                else:
+                    ax.yaxis.set_ticklabels([])
+
+                if j == 0: # first row
+                    ax.set_xlabel(rf'$\rm {labels[x]}$')
+                else:
+                    ax.xaxis.set_ticklabels([])
+
+
+                # ax.text(0.5, 0.5, f'x{i}-y{j}', transform = ax.transAxes)
+
+
+
+
+        # --- add colourbar
+        cax = fig.add_axes([0.45, 0.87, 0.5, 0.03])
+        norm = mpl.colors.Normalize(0,1)
+        fig.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), cax=cax, orientation='horizontal')
+
+        if selected:
+            cax.set_xlabel(rf'$\rm selected\ fraction$')
+        else:
+            cax.set_xlabel(rf'$\rm detected\ fraction$')
+
+        if self.save_plots:
+            if selected:
+                fig.savefig(f'{self.plot_dir}/selection_grid_compact.pdf')
+            else:
+                fig.savefig(f'{self.plot_dir}/detection_grid_compact.pdf')
+
+        if self.show_plots: plt.show()
 
 
 
