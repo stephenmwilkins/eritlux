@@ -455,8 +455,23 @@ def beta_evo_plot_singlez(z, log10L, beta_model, model):
 
 
 def beta_evo_plot(z, log10L, beta_model, model, dataz=False, cmap=False, cmap_range=False, data_cmap=False, data_marker='x', print_fit_at_dataz=False, legend=True, xlims=False, ylims=[-2.6, -1.], colorbar=True):
-    # Make handles for selecting data to fit (i.e. need to give a list of integer redshifts in the range of data)
-    # Make a handler for checking if z given as a list, integer or float
+    """
+    :param z: array of redshifts for which model is drawn (should be numpy array).
+    :param log10L: array of log10 luminosity (should be numpy array).
+    :param beta_model: the initialised best fit beta model, e.g. beta_model = beta_fitter.Bouwens2014(beta_fitter.piecewise).
+    :param model: the beta(L) evolution model, e.g. betale.piecewise.
+    :param dataz: a list of redshifts for datapoints to be plotted.
+    :param cmap: the model colormap (default is plasma).
+    :param cmap_range: a tuple of (vmin, vmax) for colormap normalization.
+    :param data_cmap: the data colormap (default is viridis).
+    :param data_marker: the marker for datapoints str (default is 'x')
+    :param print_fit_at_dataz: boolean, if True: plots dashed lines for the best fit at data z. (default is False)
+    :param legend: boolean, if True: legend is shown for data and best fits (default is True)
+    :param xlims: False or tuple for x limits for plotting (default is False)
+    :param ylims: tuple for y limits for plotting (default is (-2.6, -1), doesn't take bool)
+    :param colorbar: boolean, if True: draws colourmap on the right side of plot (default is True).
+    :return:
+    """
 
     fig = plt.figure(figsize=(5, 4))
 
