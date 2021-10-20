@@ -504,6 +504,55 @@ class Analyser:
         if self.save_plots: fig.savefig(f'{self.plot_dir}/size.pdf')
 
 
+    def make_transfer_plot(self, properties, selected = False, cmap = 'inferno'):
+
+        # a compact version of the above
+
+        if selected:
+            s = self.selected
+        else:
+            s = self.detected
+
+        N = len(properties)
+
+        fig, axes = plt.subplots(N, 1, figsize = (1,N))
+        plt.subplots_adjust(left=0.15, top=0.95, bottom=0.15, right=0.95, wspace=0.02, hspace=0.02)
+
+
+
+        for x, ax in zip(properties, axes):
+
+            ax.scatter()
+
+
+            if j == 0: # first row
+                ax.set_xlabel(rf'$\rm {labels[x]}$')
+            else:
+                ax.xaxis.set_ticklabels([])
+
+
+            # ax.text(0.5, 0.5, f'x{i}-y{j}', transform = ax.transAxes)
+
+
+
+
+        # --- add colourbar
+        cax = fig.add_axes([0.45, 0.87, 0.5, 0.03])
+        norm = mpl.colors.Normalize(0,1)
+        fig.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), cax=cax, orientation='horizontal')
+
+        if selected:
+            cax.set_xlabel(rf'$\rm selected\ fraction$')
+        else:
+            cax.set_xlabel(rf'$\rm detected\ fraction$')
+
+        if self.save_plots:
+            if selected:
+                fig.savefig(f'{self.plot_dir}/transfer_plot.pdf')
+            else:
+                fig.savefig(f'{self.plot_dir}/transfer_plot.pdf')
+
+        if self.show_plots: plt.show()
 
 
 
