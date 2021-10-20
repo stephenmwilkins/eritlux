@@ -23,6 +23,9 @@ import emcee
 
 import corner
 
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+
 # \beta(M) models
 
 def linear(x, a, b):
@@ -424,7 +427,7 @@ class Bouwens2014(betafitter):
 
 import matplotlib.pyplot as plt
 
-def beta_evo_plot(z, log10L, beta_model, model):
+def beta_evo_plot_singlez(z, log10L, beta_model, model):
     zp = beta_model.zp
     a1 = zp['a1'][0] * (z - 6) + zp['a1'][1]
     a2 = zp['a2'][0] * (z - 6) + zp['a2'][1]
@@ -449,6 +452,112 @@ def beta_evo_plot(z, log10L, beta_model, model):
     plt.xlabel(r'$\rm log_{10}(L/erg \: s^{-1})$')
     plt.ylabel(r'$\rm \beta$')
     plt.legend(loc='best')
+
+
+def beta_evo_plot(z, log10L, beta_model, model, dataz=False, cmap=False, cmap_range=False, data_cmap=False, data_marker='x', print_fit_at_dataz=False, legend=True, xlims=False, ylims=[-2.6, -1.], colorbar=True):
+    """
+    :param z: array of redshifts for which model is drawn (should be numpy array).
+    :param log10L: array of log10 luminosity (should be numpy array).
+    :param beta_model: the initialised best fit beta model, e.g. beta_model = beta_fitter.Bouwens2014(beta_fitter.piecewise).
+    :param model: the beta(L) evolution model, e.g. betale.piecewise.
+    :param dataz: a list of redshifts for datapoints to be plotted.
+    :param cmap: the model colormap (default is plasma).
+    :param cmap_range: a tuple of (vmin, vmax) for colormap normalization.
+    :param data_cmap: the data colormap (default is viridis).
+    :param data_marker: the marker for datapoints str (default is 'x')
+    :param print_fit_at_dataz: boolean, if True: plots dashed lines for the best fit at data z. (default is False)
+    :param legend: boolean, if True: legend is shown for data and best fits (default is True)
+    :param xlims: False or tuple for x limits for plotting (default is False)
+    :param ylims: tuple for y limits for plotting (default is (-2.6, -1), doesn't take bool)
+    :param colorbar: boolean, if True: draws colourmap on the right side of plot (default is True).
+    :return:
+    """
+
+    fig = plt.figure(figsize=(5, 4))
+
+    left = 0.15
+    bottom = 0.15
+    height = 0.8
+    width = 0.7
+
+    ax = fig.add_axes((left, bottom, width, height))
+    ax_scale = fig.add_axes((left + width, bottom, 0.03, height))
+
+
+    if cmap:
+        cmap = cmap
+    else:
+        cmap = mpl.cm.plasma
+
+    if data_cmap:
+        data_cmap = data_cmap
+    else:
+        data_cmap = mpl.cm.viridis
+
+    data_norm = mpl.colors.Normalize(vmin=4, vmax=9)    # Future improvement: include a handle for this
+
+    if cmap_range:
+        c_vmin = cmap_range[0]
+        c_vmax = cmap_range[1]
+    else:
+        if type(z) == int or type(z) == float:
+            # could do something more clever and aesthetically pleasing here
+            c_vmin = 4
+            c_vmax = 15
+        else:
+            c_vmin=z[0]
+            c_vmax=z[-1]
+
+    norm = mpl.colors.Normalize(vmin=c_vmin, vmax=c_vmax)
+
+    zp = beta_model.zp
+    a1 = zp['a1'][0] * (z - 6) + zp['a1'][1]
+    a2 = zp['a2'][0] * (z - 6) + zp['a2'][1]
+    b1 = zp['b1'][0] * (z - 6) + zp['b1'][1]
+    b2 = zp['b2'][0] * (z - 6) + zp['b2'][1]
+
+    for i, zz in enumerate(z):
+        ax.plot(log10L, model(log10L, a1[i], a2[i], b1[i], b2[i]), c=cmap(norm(zz)), alpha=0.7, zorder=0)
+
+
+    if type(dataz) == int or type(dataz) == float:
+        try:
+            if f'z{dataz}' in beta_model.lp and print_fit_at_dataz==True:
+                lp = beta_model.lp[f'z{dataz}']
+                ax.plot(log10L, model(log10L, *lp), label=f'best fit at z = {dataz}')
+
+            ax.errorbar(beta_model.data[f'z{dataz}'].log10L, beta_model.data[f'z{dataz}'].beta_biweight,
+                 beta_model.data[f'z{dataz}'].beta_biweight_err[1], fmt=data_marker, c='k', label=f'{beta_model.ref}, z = {dataz}')
+        except:
+            print(f'No available data for z = {dataz}')
+
+    else:
+        if dataz:
+            for z_ in dataz:
+                if f'z{z_}' in beta_model.lp and print_fit_at_dataz==True:
+                    lp = beta_model.lp[f'z{z_}']
+                    ax.plot(log10L, model(log10L, *lp), ls='--', c = data_cmap(data_norm(z_)), label=f'best fit at z = {z_}')
+
+                ax.errorbar(beta_model.data[f'z{z_}'].log10L, beta_model.data[f'z{z_}'].beta_biweight,
+                             beta_model.data[f'z{z_}'].beta_biweight_err[1], fmt=data_marker, c = data_cmap(data_norm(z_)), label=f'{beta_model.ref}, z = {z_}')
+
+
+    ax.set_ylim(*ylims)
+    if xlims:
+        ax.set_xlim(*xlims)
+    ax.set_xlabel(r'$\rm log_{10}[L_{FUV}\;/\;erg \; s^{-1}]$')
+    ax.set_ylabel(r'$\rm \beta$')
+
+    if legend:
+        ax.legend(loc='best', fontsize='small', frameon=False)
+
+    if colorbar:
+        cbar = cmap(np.arange(cmap.N)[::-1]).reshape(cmap.N, 1, 4)
+        ax_scale.set_ylabel(r'$\rm z$', fontsize=10)
+        ax_scale.imshow(cbar, extent=[0, 1, c_vmin, c_vmax], aspect='auto')
+        ax_scale.yaxis.tick_right()
+        ax_scale.yaxis.set_label_position("right")
+        ax_scale.set_xticks([])
 
 
 class analyse():

@@ -60,4 +60,9 @@ analysis.P() # print central 68 and median with Truth if provided
 analysis.corner(filename = 'output/betale_fit_corner.pdf') # produce corner plot
 
 
-# ADD EXAMPLE FITS!!! with the \beta(L) curves shown
+# Display a figure with fits for a range of z
+z = np.linspace(4, 8, 100)
+log10L = np.linspace(27, 30, 100)
+dataz = [4, 5, 6, 7] # list of redshifts at which datapoints are shown
+beta_fitter.beta_evo_plot(z, log10L, beta_model, beta_fitter.piecewise, dataz=dataz, print_fit_at_dataz=True) #print_fit_at_dataz shows the fits at each z available for data
+#plt.show()
