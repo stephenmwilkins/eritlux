@@ -470,7 +470,7 @@ def beta_evo_plot(z, log10L, beta_model, model, dataz=False, cmap=False, cmap_ra
     :param xlims: False or tuple for x limits for plotting (default is False)
     :param ylims: tuple for y limits for plotting (default is (-2.6, -1), doesn't take bool)
     :param colorbar: boolean, if True: draws colourmap on the right side of plot (default is True).
-    :return:
+    :return: matplotlip.pyplot figure.
     """
 
     if use_flare_style:
@@ -527,7 +527,7 @@ def beta_evo_plot(z, log10L, beta_model, model, dataz=False, cmap=False, cmap_ra
         try:
             if f'z{dataz}' in beta_model.lp and print_fit_at_dataz==True:
                 lp = beta_model.lp[f'z{dataz}']
-                ax.plot(log10L, model(log10L, *lp), label=f'best fit at z = {dataz}')
+                ax.plot(log10L, model(log10L, *lp), 'k--', label=f'best fit at z = {dataz}')
 
             ax.errorbar(beta_model.data[f'z{dataz}'].log10L, beta_model.data[f'z{dataz}'].beta_biweight,
                  beta_model.data[f'z{dataz}'].beta_biweight_err[1], fmt=data_marker, c='k', label=f'{beta_model.ref}, z = {dataz}')
